@@ -2,7 +2,7 @@
 
 NodeJS robots.txt parser.
 
-Currently supports the directives:
+It currently supports:
 
   * User-agent:
   * Allow:
@@ -10,8 +10,7 @@ Currently supports the directives:
   * Sitemap:
   * Crawl-delay:
   * Host:
-
-As well as paths with wildcards (*).
+  * Paths with wildcards (*)
 
 
 ## Usage
