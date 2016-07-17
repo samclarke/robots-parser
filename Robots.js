@@ -12,10 +12,6 @@ var punycode = require('punycode');
  * @private
  */
 function trimLine(line) {
-	if (!line) {
-		return null;
-	}
-
 	if (Array.isArray(line)) {
 		return line.map(trimLine);
 	}
