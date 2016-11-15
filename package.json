@@ -16,8 +16,8 @@
   "author": "Sam Clarke <sam@samclarke.com>",
   "license": "MIT",
   "devDependencies": {
-    "chai": "^1.9.1",
-    "istanbul": "^0.3.17",
-    "mocha": "^1.21.4"
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.1.2"
   }
 }
