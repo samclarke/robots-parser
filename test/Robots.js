@@ -11,7 +11,7 @@ function testRobots(url, contents, allowed, disallowed) {
 	});
 
 	disallowed.forEach(function (url) {
-		expect(robots.isAllowed(url)).to.equal(false);
+		expect(robots.isDisallowed(url)).to.equal(true);
 	});
 }
 
@@ -224,6 +224,7 @@ describe('Robots', function () {
 		expect(robots.getCrawlDelay('b')).to.equal(undefined);
 		expect(robots.getCrawlDelay('c')).to.equal(10);
 		expect(robots.getCrawlDelay('d')).to.equal(10);
+		expect(robots.getCrawlDelay()).to.equal(undefined);
 
 		done();
 	});
