@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "istanbul cover _mocha --report html --dir ./report/coverage"
+    "test": "istanbul cover _mocha --print detail --report html --dir ./report/coverage"
   },
   "repository": {
     "type": "git",
