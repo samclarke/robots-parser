@@ -128,7 +128,7 @@ function parseRobots(contents, robots) {
 				break;
 		}
 
-		isNoneUserAgentState = line[0] !== 'user-agent';
+		isNoneUserAgentState = line[0].toLowerCase() !== 'user-agent';
 	}
 }
 

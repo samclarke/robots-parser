@@ -132,6 +132,19 @@ describe('Robots', function () {
 		done();
 	});
 
+	it('should support groups with multiple user agents (case insensitive)', function (done) {
+		var contents = [
+			'User-agent: agenta',
+			'User-agent: agentb',
+			'Disallow: /fish',
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+
+		expect(robots.isAllowed("http://www.example.com/fish", "agenta")).to.equal(false);
+		done();
+	});
+
 	it('should return undefined for invalid urls', function (done) {
 		var contents = [
 			'User-agent: *',
