@@ -149,6 +149,30 @@ describe('Robots', function () {
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
 	});
 
+	it('should ignore invalid lines', function () {
+		var contents = [
+			'invalid line',
+			'User-agent: *',
+			'Disallow: /fish/',
+			':::::another invalid line:::::',
+			'Disallow: /test.html',
+			'Unknown: tule'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/fish',
+			'http://www.example.com/Test.html'
+		];
+
+		var disallowed = [
+			'http://www.example.com/fish/index.php',
+			'http://www.example.com/fish/',
+			'http://www.example.com/test.html'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
 	it('should support groups with multiple user agents (case insensitive)', function () {
 		var contents = [
 			'User-agent: agenta',

@@ -99,7 +99,7 @@ function parseRobots(contents, robots) {
 	for (var i=0; i < lines.length; i++) {
 		var line = lines[i];
 
-		if (!line || line[0].indexOf('#') === 0) {
+		if (!line || !line[0] || line[0].indexOf('#') === 0) {
 			continue;
 		}
 
