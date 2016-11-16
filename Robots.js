@@ -251,16 +251,11 @@ Robots.prototype.setPreferredHost = function (url) {
  * Will return undefined if the URL is not valid for
  * this robots.txt file.
  *
- * If the rules don't specify it will return the
- * return true unless defaultToDissallow option
- * is set to true.
- *
  * @param  {string}  url
  * @param  {string?}  ua
  * @return {boolean?}
  */
 Robots.prototype.isAllowed = function (url, ua) {
-	var rule = true;
 	var parsedUrl = libUrl.parse(url);
 	var userAgent = formatUserAgent(ua || '*');
 
@@ -274,15 +269,9 @@ Robots.prototype.isAllowed = function (url, ua) {
 		return;
 	}
 
-	if (!this._rules[userAgent]) {
-		userAgent = '*';
-	}
+	var rules = this._rules[userAgent] || this._rules['*'] || [];
 
-	if (this._rules[userAgent]) {
-		rule = isPathAllowed(parsedUrl.path, this._rules[userAgent]);
-	}
-
-	return rule;
+	return isPathAllowed(parsedUrl.path, rules);
 };
 
 /**
@@ -329,3 +318,4 @@ Robots.prototype.getSitemaps = function () {
 };
 
 module.exports = Robots;
+
