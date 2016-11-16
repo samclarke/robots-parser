@@ -16,7 +16,7 @@ function testRobots(url, contents, allowed, disallowed) {
 }
 
 describe('Robots', function () {
-	it('should parse the disallow directive', function (done) {
+	it('should parse the disallow directive', function () {
 		var contents = [
 			'User-agent: *',
 			'Disallow: /fish/',
@@ -35,11 +35,9 @@ describe('Robots', function () {
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
-
-		done();
 	});
 
-	it('should parse the allow directive', function (done) {
+	it('should parse the allow directive', function () {
 		var contents = [
 			'User-agent: *',
 			'Disallow: /fish/',
@@ -61,11 +59,9 @@ describe('Robots', function () {
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
-
-		done();
 	});
 
-	it('should parse patterns', function (done) {
+	it('should parse patterns', function () {
 		var contents = [
 			'User-agent: *',
 			'Disallow: /fish*.php',
@@ -85,11 +81,9 @@ describe('Robots', function () {
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
-
-		done();
 	});
 
-	it('should have the correct order presidence for allow and disallow', function (done) {
+	it('should have the correct order presidence for allow and disallow', function () {
 		var contents = [
 			'User-agent: *',
 			'Disallow: /fish*.php',
@@ -111,11 +105,9 @@ describe('Robots', function () {
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
-
-		done();
 	});
 
-	it('should ignore rules that are not in a group', function (done) {
+	it('should ignore rules that are not in a group', function () {
 		var contents = [
 			'Disallow: /secret.html',
 			'Disallow: /test',
@@ -128,11 +120,9 @@ describe('Robots', function () {
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, []);
-
-		done();
 	});
 
-	it('should support groups with multiple user agents (case insensitive)', function (done) {
+	it('should support groups with multiple user agents (case insensitive)', function () {
 		var contents = [
 			'User-agent: agenta',
 			'User-agent: agentb',
@@ -142,10 +132,9 @@ describe('Robots', function () {
 		var robots = robotsParser('http://www.example.com/robots.txt', contents);
 
 		expect(robots.isAllowed("http://www.example.com/fish", "agenta")).to.equal(false);
-		done();
 	});
 
-	it('should return undefined for invalid urls', function (done) {
+	it('should return undefined for invalid urls', function () {
 		var contents = [
 			'User-agent: *',
 			'Disallow: /secret.html',
@@ -163,11 +152,9 @@ describe('Robots', function () {
 		invalidUrls.forEach(function (url) {
 			expect(robots.isAllowed(url)).to.equal(undefined);
 		});
-
-		done();
 	});
 
-	it('should handle Unicode and punycode URLs', function (done) {
+	it('should handle Unicode and punycode URLs', function () {
 		var contents = [
 			'User-agent: *',
 			'Disallow: /secret.html',
@@ -185,11 +172,9 @@ describe('Robots', function () {
 		];
 
 		testRobots('http://www.münich.com/robots.txt', contents, allowed, disallowed);
-
-		done();
 	});
 
-	it('should allow all if empty robots.txt', function (done) {
+	it('should allow all if empty robots.txt', function () {
 		var allowed = [
 			'http://www.example.com/secret.html',
 			'http://www.example.com/test/index.html',
@@ -201,11 +186,16 @@ describe('Robots', function () {
 		allowed.forEach(function (url) {
 			expect(robots.isAllowed(url)).to.equal(true);
 		});
-
-		done();
 	});
 
-	it('should parse the crawl-delay directive', function (done) {
+	it('should treat null as allowing all', function () {
+		var robots = robotsParser('http://www.example.com/robots.txt', null);
+
+		expect(robots.isAllowed("http://www.example.com/", "userAgent")).to.equal(true);
+		expect(robots.isAllowed("http://www.example.com/")).to.equal(true);
+	});
+
+	it('should parse the crawl-delay directive', function () {
 		var contents = [
 			'user-agent: a',
 			'crawl-delay: 1',
@@ -225,11 +215,9 @@ describe('Robots', function () {
 		expect(robots.getCrawlDelay('c')).to.equal(10);
 		expect(robots.getCrawlDelay('d')).to.equal(10);
 		expect(robots.getCrawlDelay()).to.equal(undefined);
-
-		done();
 	});
 
-	it('should ignore invalid crawl-delay directives', function (done) {
+	it('should ignore invalid crawl-delay directives', function () {
 		var contents = [
 			'user-agent: a',
 			'crawl-delay: 1.2.1',
@@ -248,11 +236,9 @@ describe('Robots', function () {
 		expect(robots.getCrawlDelay('b')).to.equal(undefined);
 		expect(robots.getCrawlDelay('c')).to.equal(undefined);
 		expect(robots.getCrawlDelay('d')).to.equal(undefined);
-
-		done();
 	});
 
-	it('should parse the sitemap directive', function (done) {
+	it('should parse the sitemap directive', function () {
 		var contents = [
 			'user-agent: a',
 			'crawl-delay: 1',
@@ -272,11 +258,9 @@ describe('Robots', function () {
 			'/sitemap.xml',
 			'http://example.com/test/sitemap.xml'
 		]);
-
-		done();
 	});
 
-	it('should parse the host directive', function (done) {
+	it('should parse the host directive', function () {
 		var contents = [
 			'user-agent: a',
 			'crawl-delay: 1',
@@ -291,11 +275,9 @@ describe('Robots', function () {
 		var robots = robotsParser('http://www.example.com/robots.txt', contents);
 
 		expect(robots.getPreferredHost()).to.equal('example.com');
-
-		done();
 	});
 
-	it('should treat only the last host directive as valid', function (done) {
+	it('should treat only the last host directive as valid', function () {
 		var contents = [
 			'user-agent: a',
 			'crawl-delay: 1',
@@ -311,11 +293,9 @@ describe('Robots', function () {
 		var robots = robotsParser('http://www.example.com/robots.txt', contents);
 
 		expect(robots.getPreferredHost()).to.equal('example.com');
-
-		done();
 	});
 
-	it('should return null when there is no host directive', function (done) {
+	it('should return null when there is no host directive', function () {
 		var contents = [
 			'user-agent: a',
 			'crawl-delay: 1',
@@ -327,11 +307,9 @@ describe('Robots', function () {
 		var robots = robotsParser('http://www.example.com/robots.txt', contents);
 
 		expect(robots.getPreferredHost()).to.equal(null);
-
-		done();
 	});
 
-	it('should fallback to * when a UA has no rules of its own', function (done) {
+	it('should fallback to * when a UA has no rules of its own', function () {
 		var contents = [
 			'user-agent: *',
 			'crawl-delay: 1',
@@ -349,11 +327,9 @@ describe('Robots', function () {
 		expect(robots.getCrawlDelay('should-fall-back')).to.equal(1);
 		expect(robots.getCrawlDelay('d')).to.equal(10);
 		expect(robots.getCrawlDelay('dd')).to.equal(1);
-
-		done();
 	});
 
-	it('should not fallback to * when a UA has rules', function (done) {
+	it('should not fallback to * when a UA has rules', function () {
 		var contents = [
 			'user-agent: *',
 			'crawl-delay: 1',
@@ -365,11 +341,9 @@ describe('Robots', function () {
 		var robots = robotsParser('http://www.example.com/robots.txt', contents);
 
 		expect(robots.getCrawlDelay('b')).to.equal(undefined);
-
-		done();
 	});
 
-	it('should ignore version numbers in the UA string', function (done) {
+	it('should ignore version numbers in the UA string', function () {
 		var contents = [
 			'user-agent: *',
 			'crawl-delay: 1',
@@ -388,7 +362,6 @@ describe('Robots', function () {
 		expect(robots.getCrawlDelay('d/12')).to.equal(10);
 		expect(robots.getCrawlDelay('dd / 0-32-3')).to.equal(1);
 		expect(robots.getCrawlDelay('b / 1.0')).to.equal(12);
-
-		done();
 	});
 });
+
