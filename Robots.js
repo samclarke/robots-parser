@@ -109,7 +109,9 @@ function parseRobots(contents, robots) {
 					currentUserAgents.length = 0;
 				}
 
-				currentUserAgents.push(formatUserAgent(line[1]));
+				if (line[1]) {
+					currentUserAgents.push(formatUserAgent(line[1]));
+				}
 				break;
 			case 'disallow':
 				robots.addRule(currentUserAgents, line[1], false);
@@ -121,10 +123,14 @@ function parseRobots(contents, robots) {
 				robots.setCrawlDelay(currentUserAgents, line[1]);
 				break;
 			case 'sitemap':
-				robots.addSitemap(line[1]);
+				if (line[1]) {
+					robots.addSitemap(line[1]);
+				}
 				break;
 			case 'host':
-				robots.setPreferredHost(line[1].toLowerCase());
+				if (line[1]) {
+					robots.setPreferredHost(line[1].toLowerCase());
+				}
 				break;
 		}
 

@@ -328,6 +328,25 @@ describe('Robots', function () {
 		expect(robots.getPreferredHost()).to.equal('example.com');
 	});
 
+	it('should parse empty and invalid directives', function () {
+		var contents = [
+			'user-agent:',
+			'user-agent:::: a::',
+			'crawl-delay:',
+			'crawl-delay:::: 0:',
+			'host:',
+			'host:: example.com',
+			'sitemap:',
+			'sitemap:: site:map.xml',
+			'disallow:',
+			'disallow::: /:',
+			'allow:',
+			'allow::: /:',
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+	});
+
 	it('should treat only the last host directive as valid', function () {
 		var contents = [
 			'user-agent: a',
