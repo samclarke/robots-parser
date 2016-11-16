@@ -122,6 +122,33 @@ describe('Robots', function () {
 		testRobots('http://www.example.com/robots.txt', contents, allowed, []);
 	});
 
+
+	it('should ignore comments', function () {
+		var contents = [
+			'#',
+			'# This is a comment',
+			'#',
+			'User-agent: *',
+			'# This is a comment',
+			'Disallow: /fish/',
+			'# Disallow: fish',
+			'Disallow: /test.html'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/fish',
+			'http://www.example.com/Test.html'
+		];
+
+		var disallowed = [
+			'http://www.example.com/fish/index.php',
+			'http://www.example.com/fish/',
+			'http://www.example.com/test.html'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
 	it('should support groups with multiple user agents (case insensitive)', function () {
 		var contents = [
 			'User-agent: agenta',
