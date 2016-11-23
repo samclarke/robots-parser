@@ -12,6 +12,15 @@ It currently supports:
   * Host:
   * Paths with wildcards (*)
 
+## Installation
+
+Via NPM:
+
+    npm install robots-parser
+
+or via Yarn:
+
+    yarn add robots-parser
 
 ## Usage
 
