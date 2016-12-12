@@ -10,7 +10,7 @@ It currently supports:
   * Sitemap:
   * Crawl-delay:
   * Host:
-  * Paths with wildcards (*)
+  * Paths with wildcards (*) and EOL matching ($)
 
 ## Installation
 
