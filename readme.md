@@ -1,4 +1,4 @@
-# Robots Parser
+# Robots Parser [![DeepScan Grade](https://deepscan.io/api/projects/1275/branches/3378/badge/grade.svg)](https://deepscan.io/dashboard/#view=project&pid=1275&bid=3378) [![GitHub license](https://img.shields.io/github/license/samclarke/robots-parser.svg)](https://github.com/samclarke/robots-parser/blob/master/license.md)
 
 NodeJS robots.txt parser.
 
