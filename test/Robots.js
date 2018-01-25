@@ -215,7 +215,9 @@ describe('Robots', function () {
 		var invalidUrls = [
 			'http://example.com/secret.html',
 			'http://www.example.net/test/index.html',
-			'http://www.examsple.com/test/'
+			'http://www.examsple.com/test/',
+			'example.com/test/',
+			':::::;;`\\|/.example.com/test/'
 		];
 
 		var robots = robotsParser('http://www.example.com/robots.txt', '');

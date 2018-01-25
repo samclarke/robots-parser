@@ -266,7 +266,7 @@ Robots.prototype.isAllowed = function (url, ua) {
 	var userAgent = formatUserAgent(ua || '*');
 
 	parsedUrl.port = parsedUrl.port || 80;
-	parsedUrl.hostname = punycode.toUnicode(parsedUrl.hostname);
+	parsedUrl.hostname = parsedUrl.hostname && punycode.toUnicode(parsedUrl.hostname);
 
 	// The base URL must match otherwise this robots.txt is not valid for it.
 	if (parsedUrl.protocol !== this._url.protocol ||
