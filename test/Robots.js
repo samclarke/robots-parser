@@ -220,7 +220,7 @@ describe('Robots', function () {
 			':::::;;`\\|/.example.com/test/'
 		];
 
-		var robots = robotsParser('http://www.example.com/robots.txt', '');
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
 
 		invalidUrls.forEach(function (url) {
 			expect(robots.isAllowed(url)).to.equal(undefined);
@@ -366,7 +366,7 @@ describe('Robots', function () {
 			'allow::: /:',
 		].join('\n');
 
-		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+		robotsParser('http://www.example.com/robots.txt', contents);
 	});
 
 	it('should treat only the last host directive as valid', function () {

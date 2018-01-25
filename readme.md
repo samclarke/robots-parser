@@ -1,4 +1,4 @@
-# Robots Parser
+# Robots Parser [![DeepScan Grade](https://deepscan.io/api/projects/1275/branches/3378/badge/grade.svg)](https://deepscan.io/dashboard/#view=project&pid=1275&bid=3378) [![GitHub license](https://img.shields.io/github/license/samclarke/robots-parser.svg)](https://github.com/samclarke/robots-parser/blob/master/license.md)
 
 NodeJS robots.txt parser.
 
@@ -10,30 +10,41 @@ It currently supports:
   * Sitemap:
   * Crawl-delay:
   * Host:
-  * Paths with wildcards (*)
+  * Paths with wildcards (*) and EOL matching ($)
 
+## Installation
+
+Via NPM:
+
+    npm install robots-parser
+
+or via Yarn:
+
+    yarn add robots-parser
 
 ## Usage
 
-	var robotsParser = require('robots-parser');
+```js
+var robotsParser = require('robots-parser');
 
-	var robots = robotsParser('http://www.example.com/robots.txt', [
-		'User-agent: *',
-		'Disallow: /dir/',
-		'Disallow: /test.html',
-		'Allow: /dir/test.html',
-		'Allow: /test.html',
-		'Crawl-delay: 1',
-		'Sitemap: http://example.com/sitemap.xml',
-		'Host: example.com'
-	].join('\n'));
+var robots = robotsParser('http://www.example.com/robots.txt', [
+	'User-agent: *',
+	'Disallow: /dir/',
+	'Disallow: /test.html',
+	'Allow: /dir/test.html',
+	'Allow: /test.html',
+	'Crawl-delay: 1',
+	'Sitemap: http://example.com/sitemap.xml',
+	'Host: example.com'
+].join('\n'));
 
-	robots.isAllowed('http://www.example.com/test.html', 'Sams-Bot/1.0'); // false
-	robots.isAllowed('http://www.example.com/dir/test.html', 'Sams-Bot/1.0'); // true
-	robots.isDisallowed('http://www.example.com/dir/test2.html', 'Sams-Bot/1.0'); // true
-	robots.getCrawlDelay('Sams-Bot/1.0'); // 1
-	robots.getSitemaps(); // ['http://example.com/sitemap.xml']
-	robots.getPreferedHost(); // example.com
+robots.isAllowed('http://www.example.com/test.html', 'Sams-Bot/1.0'); // false
+robots.isAllowed('http://www.example.com/dir/test.html', 'Sams-Bot/1.0'); // true
+robots.isDisallowed('http://www.example.com/dir/test2.html', 'Sams-Bot/1.0'); // true
+robots.getCrawlDelay('Sams-Bot/1.0'); // 1
+robots.getSitemaps(); // ['http://example.com/sitemap.xml']
+robots.getPreferedHost(); // example.com
+```
 
 
 ### isAllowed(url, [ua])
