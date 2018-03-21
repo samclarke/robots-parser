@@ -1,5 +1,4 @@
-var URL      = require('url').URL;
-var punycode = require('punycode');
+var URL = require('url').URL;
 
 /**
  * Trims the white space from the start and end of the line.
@@ -61,6 +60,37 @@ function formatUserAgent(userAgent) {
 }
 
 /**
+ * Normalises the URL encoding of a path by encoding
+ * unicode characters.
+ * 
+ * @param {string} path
+ * @return {string}
+ * @private
+ */
+function normaliseEncoding(path) {
+	try {
+		return urlEncodeToUpper(encodeURI(path).replace(/%25/g, '%'));
+	} catch(e) {
+		return path;
+	}
+}
+
+/**
+ * Convert URL encodings to upport case.
+ * 
+ * e.g.: %2a%ef becomes %2A%EF 
+ * 
+ * @param {string} path
+ * @return {string}
+ * @private
+ */
+function urlEncodeToUpper(path) {
+	return path.replace(/%[0-9a-fA-F]{2}/g, function (match) {
+		return match.toUpperCase();
+	});
+}
+
+/**
  * Converts the pattern into a regexp if it is a wildcard
  * pattern.
  *
@@ -74,6 +104,8 @@ function parsePattern(pattern) {
 	var regexSpecialChars = /[\-\[\]\/\{\}\(\)\+\?\.\\\^\$\|]/g;
 	var wildCardPattern = /\*/g;
 	var endOfLinePattern = /\\\$$/;
+
+	pattern = normaliseEncoding(pattern)
 
 	if (pattern.indexOf('*') < 0 && pattern.indexOf('$') < 0) {
 		return pattern;
@@ -194,7 +226,6 @@ function parseUrl(url) {
 function Robots(url, contents) {
 	this._url = parseUrl(url) || {};
 	this._url.port = this._url.port || 80;
-	this._url.hostname = punycode.toUnicode(this._url.hostname);
 
 	this._rules = {};
 	this._sitemaps = [];
@@ -282,7 +313,6 @@ Robots.prototype.isAllowed = function (url, ua) {
 	var userAgent = formatUserAgent(ua || '*');
 
 	parsedUrl.port = parsedUrl.port || 80;
-	parsedUrl.hostname = parsedUrl.hostname && punycode.toUnicode(parsedUrl.hostname);
 
 	// The base URL must match otherwise this robots.txt is not valid for it.
 	if (parsedUrl.protocol !== this._url.protocol ||
@@ -292,8 +322,9 @@ Robots.prototype.isAllowed = function (url, ua) {
 	}
 
 	var rules = this._rules[userAgent] || this._rules['*'] || [];
+	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search)
 
-	return isPathAllowed(parsedUrl.pathname + parsedUrl.search, rules);
+	return isPathAllowed(path, rules);
 };
 
 /**
@@ -340,4 +371,3 @@ Robots.prototype.getSitemaps = function () {
 };
 
 module.exports = Robots;
-

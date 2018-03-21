@@ -227,7 +227,7 @@ describe('Robots', function () {
 		});
 	});
 
-	it('should handle Unicode and punycode URLs', function () {
+	it('should handle Unicode, urlencoded and punycode URLs', function () {
 		var contents = [
 			'User-agent: *',
 			'Disallow: /secret.html',
@@ -236,15 +236,108 @@ describe('Robots', function () {
 
 		var allowed = [
 			'http://www.münich.com/index.html',
-			'http://www.xn--mnich-kva.com/index.html'
+			'http://www.xn--mnich-kva.com/index.html',
+			'http://www.m%C3%BCnich.com/index.html'
 		];
 
 		var disallowed = [
 			'http://www.münich.com/secret.html',
-			'http://www.xn--mnich-kva.com/secret.html'
+			'http://www.xn--mnich-kva.com/secret.html',
+			'http://www.m%C3%BCnich.com/secret.html'
 		];
 
 		testRobots('http://www.münich.com/robots.txt', contents, allowed, disallowed);
+		testRobots('http://www.xn--mnich-kva.com/robots.txt', contents, allowed, disallowed);
+		testRobots('http://www.m%C3%BCnich.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should handle Unicode and urlencoded paths', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /%CF%80',
+			'Disallow: /%e2%9d%83',
+			'Disallow: /%a%a',
+			'Disallow: /💩',
+			'Disallow: /✼*t$',
+			'Disallow: /%E2%9C%A4*t$',
+			'Disallow: /✿%a',
+			'Disallow: /http%3A%2F%2Fexample.org'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/✼testing',
+			'http://www.example.com/%E2%9C%BCtesting',
+			'http://www.example.com/✤testing',
+			'http://www.example.com/%E2%9C%A4testing',
+			'http://www.example.com/http://example.org',
+			'http://www.example.com/http:%2F%2Fexample.org'
+		];
+		
+		var disallowed = [
+			'http://www.example.com/%CF%80',
+			'http://www.example.com/%CF%80/index.html',
+			'http://www.example.com/π',
+			'http://www.example.com/π/index.html',
+			'http://www.example.com/%e2%9d%83',
+			'http://www.example.com/%E2%9D%83/index.html',
+			'http://www.example.com/❃',
+			'http://www.example.com/❃/index.html',
+			'http://www.example.com/%F0%9F%92%A9',
+			'http://www.example.com/%F0%9F%92%A9/index.html',
+			'http://www.example.com/💩',
+			'http://www.example.com/💩/index.html',
+			'http://www.example.com/%a%a',
+			'http://www.example.com/%a%a/index.html',
+			'http://www.example.com/✼test',
+			'http://www.example.com/%E2%9C%BCtest',
+			'http://www.example.com/✤test',
+			'http://www.example.com/%E2%9C%A4testt',
+			'http://www.example.com/✿%a',
+			'http://www.example.com/%E2%9C%BF%atest',
+			'http://www.example.com/http%3A%2F%2Fexample.org'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should handle lone high / low surrogates', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /\uD800',
+			'Disallow: /\uDC00'
+		].join('\n');
+
+		// These are invalid so can't be disallowed
+		var allowed = [
+			'http://www.example.com/\uDC00',
+			'http://www.example.com/\uD800'
+		];
+
+		var disallowed = [];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should ignore host case', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /secret.html',
+			'Disallow: /test',
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/index.html',
+			'http://www.ExAmPlE.com/index.html',
+			'http://www.EXAMPLE.com/index.html'
+		];
+
+		var disallowed = [
+			'http://www.example.com/secret.html',
+			'http://www.ExAmPlE.com/secret.html',
+			'http://www.EXAMPLE.com/secret.html'
+		];
+
+		testRobots('http://www.eXample.com/robots.txt', contents, allowed, disallowed);
 	});
 
 	it('should allow all if empty robots.txt', function () {
