@@ -1,4 +1,4 @@
-var libUrl   = require('url');
+var URL      = require('url').URL;
 var punycode = require('punycode');
 
 /**
@@ -173,10 +173,26 @@ function isPathAllowed(path, rules) {
 	return result;
 }
 
+/**
+ * Converts provided string into an URL object.
+ * 
+ * Will return null if provided string is not a valid URL.
+ * 
+ * @param {string} url 
+ * @return {?URL}
+ * @private
+ */
+function parseUrl(url) {
+	try {
+		return new URL(url);
+	} catch(e) {
+		return null;
+	}
+}
 
 
 function Robots(url, contents) {
-	this._url = libUrl.parse(url);
+	this._url = parseUrl(url) || {};
 	this._url.port = this._url.port || 80;
 	this._url.hostname = punycode.toUnicode(this._url.hostname);
 
@@ -262,7 +278,7 @@ Robots.prototype.setPreferredHost = function (url) {
  * @return {boolean?}
  */
 Robots.prototype.isAllowed = function (url, ua) {
-	var parsedUrl = libUrl.parse(url);
+	var parsedUrl = parseUrl(url) || {};
 	var userAgent = formatUserAgent(ua || '*');
 
 	parsedUrl.port = parsedUrl.port || 80;
@@ -277,7 +293,7 @@ Robots.prototype.isAllowed = function (url, ua) {
 
 	var rules = this._rules[userAgent] || this._rules['*'] || [];
 
-	return isPathAllowed(parsedUrl.path, rules);
+	return isPathAllowed(parsedUrl.pathname + parsedUrl.search, rules);
 };
 
 /**
