@@ -23,6 +23,22 @@ function trimLine(line) {
 }
 
 /**
+ * Remove comments from lines
+ *
+ * @param {string} line 
+ * @return {string}
+ * @private
+ */
+function removeComments(line) {
+	var commentStartIndex = line.indexOf('#');
+	if (commentStartIndex > -1) {
+		return line.substr(0, commentStartIndex);
+	}
+
+	return line;
+}
+
+/**
  * Splits a line at the first occurrence of :
  *
  * @param  {string} line
@@ -123,6 +139,7 @@ function parseRobots(contents, robots) {
 	var newlineRegex = /\r\n|\r|\n/;
 	var lines = contents
 		.split(newlineRegex)
+		.map(removeComments)
 		.map(splitLine)
 		.map(trimLine);
 
@@ -131,7 +148,7 @@ function parseRobots(contents, robots) {
 	for (var i=0; i < lines.length; i++) {
 		var line = lines[i];
 
-		if (!line || !line[0] || line[0].indexOf('#') === 0) {
+		if (!line || !line[0]) {
 			continue;
 		}
 

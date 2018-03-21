@@ -130,7 +130,7 @@ describe('Robots', function () {
 			'#',
 			'User-agent: *',
 			'# This is a comment',
-			'Disallow: /fish/',
+			'Disallow: /fish/ # ignore',
 			'# Disallow: fish',
 			'Disallow: /test.html'
 		].join('\n');
