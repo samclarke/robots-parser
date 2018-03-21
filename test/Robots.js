@@ -572,5 +572,39 @@ describe('Robots', function () {
 		expect(robots.getCrawlDelay('dd / 0-32-3')).to.equal(1);
 		expect(robots.getCrawlDelay('b / 1.0')).to.equal(12);
 	});
+
+
+	it('should return the line number of the matching directive', function () {
+		var contents = [
+			'',
+			'User-agent: *',
+			'',
+			'Disallow: /fish/',
+			'Disallow: /test.html',
+			'Allow: /fish/test.html',
+			'Allow: /test.html',
+			'',
+			'User-agent: a',
+			'allow: /',
+			'',
+			'User-agent: b',
+			'disallow: /test',
+			'disallow: /t*t',
+			// check UA returns -1 if no matching UA and also handles patterns both allow and disaloow
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+
+		expect(robots.getMatchingLineNumber('http://www.example.com/fish')).to.equal(-1);
+		expect(robots.getMatchingLineNumber('http://www.example.com/fish/test.html')).to.equal(6);
+		expect(robots.getMatchingLineNumber('http://www.example.com/Test.html')).to.equal(-1);
+
+		expect(robots.getMatchingLineNumber('http://www.example.com/fish/index.php')).to.equal(4);
+		expect(robots.getMatchingLineNumber('http://www.example.com/fish/')).to.equal(4);
+		expect(robots.getMatchingLineNumber('http://www.example.com/test.html')).to.equal(5);
+
+		expect(robots.getMatchingLineNumber('http://www.example.com/test.html', 'a')).to.equal(10);
+		expect(robots.getMatchingLineNumber('http://www.example.com/test.html', 'b')).to.equal(14);
+	});
 });
 

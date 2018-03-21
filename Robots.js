@@ -146,10 +146,10 @@ function parseRobots(contents, robots) {
 				}
 				break;
 			case 'disallow':
-				robots.addRule(currentUserAgents, line[1], false);
+				robots.addRule(currentUserAgents, line[1], false, i + 1);
 				break;
 			case 'allow':
-				robots.addRule(currentUserAgents, line[1], true);
+				robots.addRule(currentUserAgents, line[1], true, i + 1);
 				break;
 			case 'crawl-delay':
 				robots.setCrawlDelay(currentUserAgents, line[1]);
@@ -175,34 +175,32 @@ function parseRobots(contents, robots) {
  *
  * @param  {string}  path
  * @param  {Array.<Object>}  rules
- * @return {boolean?}
+ * @return {Object?}
  * @private
  */
-function isPathAllowed(path, rules) {
-	var result = true;
-	var resultRuleLength = 0;
+function findRule(path, rules) {
+   var matchingRule = null;
 
-	for (var i=0; i < rules.length; i++) {
-		var rule = rules[i];
+   for (var i=0; i < rules.length; i++) {
+	   var rule = rules[i];
 
-		if (typeof rule.pattern === 'string') {
-			if (path.indexOf(rule.pattern) !== 0) {
-				continue;
-			}
+	   if (typeof rule.pattern === 'string') {
+		   if (path.indexOf(rule.pattern) !== 0) {
+			   continue;
+		   }
 
-			// The longest matching rule takes precedence
-			if (rule.pattern.length > resultRuleLength) {
-				resultRuleLength = rule.pattern.length;
-				result = rule.allow;
-			}
-		// The first matching pattern takes precedence
-		// over all other rules including other patterns
-		} else if (rule.pattern.test(path)) {
-			return rule.allow;
-		}
-	}
+		   // The longest matching rule takes precedence
+		   if (!matchingRule || rule.pattern.length > matchingRule.pattern.length) {
+			   matchingRule = rule;
+		   }
+	   // The first matching pattern takes precedence
+	   // over all other rules including other patterns
+	   } else if (rule.pattern.test(path)) {
+		   return rule;
+	   }
+   }
 
-	return result;
+   return matchingRule;
 }
 
 /**
@@ -241,8 +239,9 @@ function Robots(url, contents) {
  * @param {Array.<string>} userAgents
  * @param {string} pattern
  * @param {boolean} allow
+ * @param {number} [lineNumber] Should use 1-based indexing
  */
-Robots.prototype.addRule = function (userAgents, pattern, allow) {
+Robots.prototype.addRule = function (userAgents, pattern, allow, lineNumber) {
 	var rules = this._rules;
 
 	userAgents.forEach(function (userAgent) {
@@ -254,7 +253,8 @@ Robots.prototype.addRule = function (userAgents, pattern, allow) {
 
 		rules[userAgent].push({
 			pattern: parsePattern(pattern),
-			allow: allow
+			allow: allow,
+			lineNumber: lineNumber
 		});
 	});
 };
@@ -298,17 +298,7 @@ Robots.prototype.setPreferredHost = function (url) {
 	this._preferedHost = url;
 };
 
-/**
- * Returns true if allowed, false if not allowed.
- *
- * Will return undefined if the URL is not valid for
- * this robots.txt file.
- *
- * @param  {string}  url
- * @param  {string?}  ua
- * @return {boolean?}
- */
-Robots.prototype.isAllowed = function (url, ua) {
+Robots.prototype._getRule = function (url, ua) {
 	var parsedUrl = parseUrl(url) || {};
 	var userAgent = formatUserAgent(ua || '*');
 
@@ -323,8 +313,49 @@ Robots.prototype.isAllowed = function (url, ua) {
 
 	var rules = this._rules[userAgent] || this._rules['*'] || [];
 	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search)
+	var rule = findRule(path, rules);
 
-	return isPathAllowed(path, rules);
+	return rule;
+};
+
+/**
+ * Returns true if allowed, false if not allowed.
+ *
+ * Will return undefined if the URL is not valid for
+ * this robots.txt file.
+ *
+ * @param  {string}  url
+ * @param  {string?}  ua
+ * @return {boolean?}
+ */
+Robots.prototype.isAllowed = function (url, ua) {
+	var rule = this._getRule(url, ua);
+
+	if (typeof rule === 'undefined') {
+		return;
+	}
+
+	return !rule || rule.allow;
+};
+
+/**
+ * Returns the line number of the matching directive for the specified
+ * URL and user-agent if any.
+ *
+ * The line numbers start at 1 and go up (1-based indexing).
+ *
+ * Return -1 if there is no matching directive. If a rule is manually
+ * added without a lineNumber then this will return undefined for that
+ * rule.
+ *
+ * @param  {string}  url
+ * @param  {string?}  ua
+ * @return {number?}
+ */
+Robots.prototype.getMatchingLineNumber = function (url, ua) {
+	var rule = this._getRule(url, ua);
+
+	return rule ? rule.lineNumber : -1;
 };
 
 /**
