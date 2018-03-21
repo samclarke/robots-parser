@@ -361,6 +361,30 @@ describe('Robots', function () {
 		expect(robots.isAllowed("http://www.example.com/")).to.equal(true);
 	});
 
+	it('should handle invalid robots.txt urls', function () {
+		var contents = [
+			'user-agent: *',
+			'disallow: /',
+
+			'host: www.example.com',
+			'sitemap: /sitemap.xml'
+		].join('\n');
+
+		var sitemapUrls = [
+			undefined,
+			null,
+			'null',
+			':/wom/test/'
+		];
+
+		sitemapUrls.forEach(function (url) {
+			var robots = robotsParser(url, contents);
+			expect(robots.isAllowed('http://www.example.com/index.html')).to.equal(undefined);
+			expect(robots.getPreferredHost()).to.equal('www.example.com');
+			expect(robots.getSitemaps()).to.eql(['/sitemap.xml']);
+		});
+	});
+
 	it('should parse the crawl-delay directive', function () {
 		var contents = [
 			'user-agent: a',
