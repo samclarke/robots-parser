@@ -173,7 +173,7 @@ function parseRobots(contents, robots) {
 /**
  * Returns if a pattern is allowed by the specified rules.
  *
- * @param  {strnig}  path
+ * @param  {string}  path
  * @param  {Array.<Object>}  rules
  * @return {boolean?}
  * @private
@@ -312,7 +312,7 @@ Robots.prototype.isAllowed = function (url, ua) {
 	var parsedUrl = parseUrl(url) || {};
 	var userAgent = formatUserAgent(ua || '*');
 
-	parsedUrl.port = parsedUrl.port || 80;
+	parsedUrl.port = parsedUrl.port || '80';
 
 	// The base URL must match otherwise this robots.txt is not valid for it.
 	if (parsedUrl.protocol !== this._url.protocol ||
