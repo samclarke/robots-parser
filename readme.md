@@ -83,6 +83,31 @@ Returns an array of sitemap URLs specified by the `sitemap:` directive.
 Returns the preferred host name specified by the `host:` directive or null if there isn't one.
 
 
+# Changes
+
+### Version 2.0.0:
+
+This release is not 100% backwards compatible as it now uses the new URL APIs which are not supported in Node < 7.
+
+ * Update code to not use deprecated URL module API's.  
+   &ndash; Thanks to @kdzwinel
+
+### Version 1.0.2:
+
+ * Fixed error caused by invalid URLs missing the protocol.
+
+### Version 1.0.1:
+
+ * Fixed bug with the "user-agent" rule being treated as case sensitive.  
+   &ndash; Thanks to @brendonboshell
+ * Improved test coverage.  
+   &ndash; Thanks to @schornio
+
+### Version 1.0.0:
+
+ * Initial release.
+
+
 # License
 
 	The MIT License (MIT)
