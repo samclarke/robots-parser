@@ -63,6 +63,16 @@ Returns true if crawling the specified URL is not allowed for the specified user
 This will return `undefined` if the URL isn't valid for this robots.txt.
 
 
+### getMatchingLineNumber(url, [ua])
+**number or undefined**
+
+Returns the line number of the matching directive for the specified URL and user-agent if any.
+
+Line numbers start at 1 and go up (1-based indexing).
+
+Returns -1 if there is no matching directive. If a rule is manually added without a lineNumber then this will return undefined for that rule.
+
+
 ### getCrawlDelay([ua])
 **number or undefined**
 
@@ -84,6 +94,14 @@ Returns the preferred host name specified by the `host:` directive or null if th
 
 
 # Changes
+
+### Version 2.1.0:
+
+ * Removed use of punycode module API's as new URL API handles it
+ * Improved test coverage
+ * Added tests for percent encoded paths and improved support
+ * Added `getMatchingLineNumber()` method
+ * Fixed bug with comments on same line as directive
 
 ### Version 2.0.0:
 
