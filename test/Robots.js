@@ -1,6 +1,5 @@
 var robotsParser = require('../index');
 var expect = require('chai').expect;
-var punycode = require('punycode');
 
 
 function testRobots(url, contents, allowed, disallowed) {
