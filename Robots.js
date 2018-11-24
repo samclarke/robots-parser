@@ -118,7 +118,8 @@ function urlEncodeToUpper(path) {
  */
 function parsePattern(pattern) {
 	var regexSpecialChars = /[\-\[\]\/\{\}\(\)\+\?\.\\\^\$\|]/g;
-	var wildCardPattern = /\*/g;
+	// Treat consecutive wildcards as one (#12)
+	var wildCardPattern = /\*+/g;
 	var endOfLinePattern = /\\\$$/;
 
 	pattern = normaliseEncoding(pattern)
