@@ -272,7 +272,7 @@ describe('Robots', function () {
 			'http://www.example.com/http://example.org',
 			'http://www.example.com/http:%2F%2Fexample.org'
 		];
-		
+
 		var disallowed = [
 			'http://www.example.com/%CF%80',
 			'http://www.example.com/%CF%80/index.html',

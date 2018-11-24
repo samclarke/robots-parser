@@ -25,7 +25,7 @@ function trimLine(line) {
 /**
  * Remove comments from lines
  *
- * @param {string} line 
+ * @param {string} line
  * @return {string}
  * @private
  */
@@ -57,7 +57,7 @@ function splitLine(line) {
 
 /**
  * Normalises the user-agent string by converting it to
- * lowercase and removing any version numbers.
+ * lower case and removing any version numbers.
  *
  * @param  {string} userAgent
  * @return {string}
@@ -92,10 +92,10 @@ function normaliseEncoding(path) {
 }
 
 /**
- * Convert URL encodings to upport case.
- * 
- * e.g.: %2a%ef becomes %2A%EF 
- * 
+ * Convert URL encodings to support case.
+ *
+ * e.g.: %2a%ef becomes %2A%EF
+ *
  * @param {string} path
  * @return {string}
  * @private
@@ -244,7 +244,7 @@ function Robots(url, contents) {
 
 	this._rules = {};
 	this._sitemaps = [];
-	this._preferedHost = null;
+	this._preferredHost = null;
 
 	parseRobots(contents || '', this);
 }
@@ -312,7 +312,7 @@ Robots.prototype.addSitemap = function (url) {
  * @param {string} url
  */
 Robots.prototype.setPreferredHost = function (url) {
-	this._preferedHost = url;
+	this._preferredHost = url;
 };
 
 Robots.prototype._getRule = function (url, ua) {
@@ -406,7 +406,7 @@ Robots.prototype.getCrawlDelay = function (ua) {
  * @return {string?}
  */
 Robots.prototype.getPreferredHost = function () {
-	return this._preferedHost;
+	return this._preferredHost;
 };
 
 /**
