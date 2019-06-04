@@ -78,7 +78,7 @@ function formatUserAgent(userAgent) {
 /**
  * Normalises the URL encoding of a path by encoding
  * unicode characters.
- * 
+ *
  * @param {string} path
  * @return {string}
  * @private
@@ -133,7 +133,7 @@ function parsePattern(pattern) {
 		.replace(wildCardPattern, '(?:.*)')
 		.replace(endOfLinePattern, '$');
 
-	return new RegExp(pattern);
+	return new RegExp('^' + pattern);
 }
 
 function parseRobots(contents, robots) {
@@ -223,10 +223,10 @@ function findRule(path, rules) {
 
 /**
  * Converts provided string into an URL object.
- * 
+ *
  * Will return null if provided string is not a valid URL.
- * 
- * @param {string} url 
+ *
+ * @param {string} url
  * @return {?URL}
  * @private
  */

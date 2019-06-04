@@ -64,19 +64,24 @@ describe('Robots', function () {
 		var contents = [
 			'User-agent: *',
 			'Disallow: /fish*.php',
-			'Disallow: /*.dext$'
+			'Disallow: /*.dext$',
+			'Disallow: /dir*'
 		].join('\n');
 
 		var allowed = [
 			'http://www.example.com/Fish.PHP',
-			'http://www.example.com/Fish.dext1'
+			'http://www.example.com/Fish.dext1',
+			'http://www.example.com/folder/dir.html',
+			'http://www.example.com/folder/dir/test.html'
 		];
 
 		var disallowed = [
 			'http://www.example.com/fish.php',
 			'http://www.example.com/fishheads/catfish.php?parameters',
 			'http://www.example.com/AnYthInG.dext',
-			'http://www.example.com/Fish.dext.dext'
+			'http://www.example.com/Fish.dext.dext',
+			'http://www.example.com/dir/test.html',
+			'http://www.example.com/directory.html'
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
