@@ -95,6 +95,13 @@ Returns the preferred host name specified by the `host:` directive or null if th
 
 # Changes
 
+### Version 2.2.0:
+
+ * Fix bug that with matching wildcard patterns with some URLs
+   &ndash; Thanks to @ckylape for reporting and fixing
+ * Changed matching algorithm to match Google's implementation in google/robotstxt
+ * Changed order of precedence to match current spec
+
 ### Version 2.1.1:
 
  * Fix bug that could be used to causing rule checking to take a long time
