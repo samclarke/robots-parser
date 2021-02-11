@@ -140,6 +140,70 @@ describe('Robots', function () {
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
 	});
 
+	it('should parse lines delimitated by \\r', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /fish/',
+			'Disallow: /test.html'
+		].join('\r');
+
+		var allowed = [
+			'http://www.example.com/fish',
+			'http://www.example.com/Test.html'
+		];
+
+		var disallowed = [
+			'http://www.example.com/fish/index.php',
+			'http://www.example.com/fish/',
+			'http://www.example.com/test.html'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should parse lines delimitated by \\r\\n', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /fish/',
+			'Disallow: /test.html'
+		].join('\r\n');
+
+		var allowed = [
+			'http://www.example.com/fish',
+			'http://www.example.com/Test.html'
+		];
+
+		var disallowed = [
+			'http://www.example.com/fish/index.php',
+			'http://www.example.com/fish/',
+			'http://www.example.com/test.html'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+
+	it('should parse lines delimitated by mixed line endings', function () {
+		var contents = [
+			'User-agent: *\r',
+			'Disallow: /fish/\r\n',
+			'Disallow: /test.html\n\n'
+		].join('');
+
+		var allowed = [
+			'http://www.example.com/fish',
+			'http://www.example.com/Test.html'
+		];
+
+		var disallowed = [
+			'http://www.example.com/fish/index.php',
+			'http://www.example.com/fish/',
+			'http://www.example.com/test.html'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
 	it('should ignore rules that are not in a group', function () {
 		var contents = [
 			'Disallow: /secret.html',
@@ -668,4 +732,3 @@ describe('Robots', function () {
 		expect(end - start).to.be.lessThan(500);
 	});
 });
-
