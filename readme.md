@@ -43,7 +43,7 @@ robots.isAllowed('http://www.example.com/dir/test.html', 'Sams-Bot/1.0'); // tru
 robots.isDisallowed('http://www.example.com/dir/test2.html', 'Sams-Bot/1.0'); // true
 robots.getCrawlDelay('Sams-Bot/1.0'); // 1
 robots.getSitemaps(); // ['http://example.com/sitemap.xml']
-robots.getPreferedHost(); // example.com
+robots.getPreferredHost(); // example.com
 ```
 
 
