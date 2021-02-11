@@ -48,13 +48,13 @@ describe('Robots', function () {
 		var allowed = [
 			'http://www.example.com/fish',
 			'http://www.example.com/fish/test.html',
-			'http://www.example.com/Test.html'
+			'http://www.example.com/Test.html',
+			'http://www.example.com/test.html'
 		];
 
 		var disallowed = [
 			'http://www.example.com/fish/index.php',
 			'http://www.example.com/fish/',
-			'http://www.example.com/test.html'
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
@@ -94,18 +94,47 @@ describe('Robots', function () {
 			'Allow: /fish/index.php',
 			'Disallow: /test',
 			'Allow: /test/',
+			'Disallow: /aa/',
+			'Allow: /aa/',
+			'Allow: /bb/',
+			'Disallow: /bb/',
 		].join('\n');
 
 		var allowed = [
 			'http://www.example.com/test/index.html',
-			'http://www.example.com/test/'
+			'http://www.example.com/fish/index.php',
+			'http://www.example.com/test/',
+			'http://www.example.com/aa/',
+			'http://www.example.com/bb/',
+			'http://www.example.com/x/'
 		];
 
 		var disallowed = [
 			'http://www.example.com/fish.php',
 			'http://www.example.com/fishheads/catfish.php?parameters',
-			'http://www.example.com/fish/index.php',
 			'http://www.example.com/test'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should have the correct order precedence for wildcards', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /*/',
+			'Allow: /x/',
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/x/',
+			'http://www.example.com/fish.php',
+			'http://www.example.com/test'
+		];
+		
+		var disallowed = [
+			'http://www.example.com/a/',
+			'http://www.example.com/xx/',
+			'http://www.example.com/test/index.html'
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
@@ -594,7 +623,10 @@ describe('Robots', function () {
 			'User-agent: b',
 			'disallow: /test',
 			'disallow: /t*t',
-			// check UA returns -1 if no matching UA and also handles patterns both allow and disaloow
+			'',
+			'User-agent: c',
+			'Disallow: /fish*.php',
+			'Allow: /fish/index.php'
 		].join('\n');
 
 		var robots = robotsParser('http://www.example.com/robots.txt', contents);
@@ -605,10 +637,12 @@ describe('Robots', function () {
 
 		expect(robots.getMatchingLineNumber('http://www.example.com/fish/index.php')).to.equal(4);
 		expect(robots.getMatchingLineNumber('http://www.example.com/fish/')).to.equal(4);
-		expect(robots.getMatchingLineNumber('http://www.example.com/test.html')).to.equal(5);
+		expect(robots.getMatchingLineNumber('http://www.example.com/test.html')).to.equal(7);
 
 		expect(robots.getMatchingLineNumber('http://www.example.com/test.html', 'a')).to.equal(10);
-		expect(robots.getMatchingLineNumber('http://www.example.com/test.html', 'b')).to.equal(14);
+
+		expect(robots.getMatchingLineNumber('http://www.example.com/fish.php', 'c')).to.equal(17);
+		expect(robots.getMatchingLineNumber('http://www.example.com/fish/index.php', 'c')).to.equal(18);
 	});
 
 	it('should handle large wildcards efficiently', function () {

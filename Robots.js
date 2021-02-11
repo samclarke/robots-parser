@@ -242,14 +242,11 @@ function findRule(path, rules) {
 			continue;
 		}
 
-		// The first matching pattern takes precedence
-		// over all other rules including other patterns
-		if (rule.isWildcard) {
-			return rule;
-		}
-
 		// The longest matching rule takes precedence
 		if (!matchingRule || rule.pattern.length > matchingRule.pattern.length) {
+			matchingRule = rule;
+		} else if (rule.pattern.length == matchingRule.pattern.length &&
+			rule.allow && !matchingRule.allow) {
 			matchingRule = rule;
 		}
    }
@@ -306,7 +303,6 @@ Robots.prototype.addRule = function (userAgents, pattern, allow, lineNumber) {
 		}
 
 		rules[userAgent].push({
-			isWildcard: pattern.indexOf('*') > 0 || pattern[pattern.length] === '$',
 			pattern: normaliseEncoding(pattern),
 			allow: allow,
 			lineNumber: lineNumber
