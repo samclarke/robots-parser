@@ -87,7 +87,7 @@ describe('Robots', function () {
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
 	});
 
-	it('should have the correct order presidence for allow and disallow', function () {
+	it('should have the correct order precedence for allow and disallow', function () {
 		var contents = [
 			'User-agent: *',
 			'Disallow: /fish*.php',
@@ -609,6 +609,29 @@ describe('Robots', function () {
 
 		expect(robots.getMatchingLineNumber('http://www.example.com/test.html', 'a')).to.equal(10);
 		expect(robots.getMatchingLineNumber('http://www.example.com/test.html', 'b')).to.equal(14);
+	});
+
+	it('should handle large wildcards efficiently', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /' + '*'.repeat(2048) + '.html',
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/' + 'sub'.repeat(2048) + 'folder/index.php',
+		];
+
+		var disallowed = [
+			'http://www.example.com/secret.html'
+		];
+
+		const start = Date.now();
+		testRobots('http://www.eXample.com/robots.txt', contents, allowed, disallowed);
+		const end = Date.now();
+
+		// Should take less than 500 ms (high to allow for variableness of
+		// machines running the test, should normally be much less)
+		expect(end - start).to.be.lessThan(500);
 	});
 });
 

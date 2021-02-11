@@ -107,33 +107,69 @@ function urlEncodeToUpper(path) {
 }
 
 /**
- * Converts the pattern into a regexp if it is a wildcard
- * pattern.
+ * Matches a pattern with the specified path
  *
- * Returns a string if the pattern isn't a wildcard pattern
+ * Uses same algorithm to match patterns as the Google implementation in
+ * google/robotstxt so it should be consistent with the spec.
  *
- * @param  {string} pattern
- * @return {string|RegExp}
+ * @see https://github.com/google/robotstxt/blob/f465f0ede81099dd8bc4aeb2966b3a892bd488b3/robots.cc#L74
+ * @param {string} pattern
+ * @param {string} path
+ * @return {boolean}
  * @private
  */
-function parsePattern(pattern) {
-	var regexSpecialChars = /[\-\[\]\/\{\}\(\)\+\?\.\\\^\$\|]/g;
-	// Treat consecutive wildcards as one (#12)
-	var wildCardPattern = /\*+/g;
-	var endOfLinePattern = /\\\$$/;
+function matches(pattern, path) {
+	// I've added extra comments to try make this easier to understand
 
-	pattern = normaliseEncoding(pattern)
+	// Stores the lengths of all the current matching substrings.
+	// Maximum number of possible matching lengths is every length in path plus
+	// 1 to handle 0 length too (if pattern starts with * which is zero or more)
+	var matchingLengths = new Array(path.length + 1);
+	var numMatchingLengths = 1;
 
-	if (pattern.indexOf('*') < 0 && pattern.indexOf('$') < 0) {
-		return pattern;
+	// Initially longest match is 0
+	matchingLengths[0] = 0;
+
+	for (var p = 0; p < pattern.length; p++) {
+		// If $ is at the end of pattern then we must match the whole path.
+		// Which is true if the longest matching length matches path length
+		if (pattern[p] === '$' && p + 1 === pattern.length) {
+			return matchingLengths[numMatchingLengths - 1] === path.length;
+		}
+
+		// Handle wildcards
+		if (pattern[p] == '*') {
+			// Wildcard so all substrings minus the current smallest matching
+			// length are matches
+			numMatchingLengths = path.length - matchingLengths[0] + 1;
+
+			// Update matching lengths to include the smallest all the way up
+			// to numMatchingLengths
+			// Don't update smallest possible match as * matches zero or more
+			// so the smallest current match is also valid
+			for (var i = 1; i < numMatchingLengths; i++) {
+				matchingLengths[i] = matchingLengths[i - 1] + 1;
+			}
+		} else {
+			// Check the char at the matching length matches the pattern, if it
+			// does increment it and add it as a valid length, ignore if not.
+			var numMatches = 0;
+			for (var i = 0; i < numMatchingLengths; i++) {
+				if (matchingLengths[i] < path.length && path[matchingLengths[i]] === pattern[p]) {
+					matchingLengths[numMatches++] = matchingLengths[i] + 1;
+				}
+			}
+
+			// No paths matched the current pattern char so not a match
+			if (numMatches == 0) {
+				return false;
+			}
+
+			numMatchingLengths = numMatches;
+		}
 	}
 
-	pattern = pattern
-		.replace(regexSpecialChars, '\\$&')
-		.replace(wildCardPattern, '(?:.*)')
-		.replace(endOfLinePattern, '$');
-
-	return new RegExp('^' + pattern);
+	return true;
 }
 
 function parseRobots(contents, robots) {
@@ -202,20 +238,20 @@ function findRule(path, rules) {
    for (var i=0; i < rules.length; i++) {
 	   var rule = rules[i];
 
-	   if (typeof rule.pattern === 'string') {
-		   if (path.indexOf(rule.pattern) !== 0) {
-			   continue;
-		   }
+		if (!matches(rule.pattern, path)) {
+			continue;
+		}
 
-		   // The longest matching rule takes precedence
-		   if (!matchingRule || rule.pattern.length > matchingRule.pattern.length) {
-			   matchingRule = rule;
-		   }
-	   // The first matching pattern takes precedence
-	   // over all other rules including other patterns
-	   } else if (rule.pattern.test(path)) {
-		   return rule;
-	   }
+		// The first matching pattern takes precedence
+		// over all other rules including other patterns
+		if (rule.isWildcard) {
+			return rule;
+		}
+
+		// The longest matching rule takes precedence
+		if (!matchingRule || rule.pattern.length > matchingRule.pattern.length) {
+			matchingRule = rule;
+		}
    }
 
    return matchingRule;
@@ -270,7 +306,8 @@ Robots.prototype.addRule = function (userAgents, pattern, allow, lineNumber) {
 		}
 
 		rules[userAgent].push({
-			pattern: parsePattern(pattern),
+			isWildcard: pattern.indexOf('*') > 0 || pattern[pattern.length] === '$',
+			pattern: normaliseEncoding(pattern),
 			allow: allow,
 			lineNumber: lineNumber
 		});
