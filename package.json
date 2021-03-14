@@ -7,7 +7,7 @@
 		"test": "tests"
 	},
 	"scripts": {
-		"test": "nyc --reporter=text-summary --reporter html mocha"
+		"test": "nyc --reporter=text-summary --reporter=html --reporter=lcovonly mocha"
 	},
 	"repository": {
 		"type": "git",
