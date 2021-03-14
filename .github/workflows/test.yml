@@ -32,6 +32,7 @@ jobs:
           parallel: true
 
   finish:
+    name: Coveralls coverage
     needs: test
     runs-on: ubuntu-latest
     steps:
