@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - master
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -23,14 +24,14 @@ jobs:
       - run: npm ci
       - run: npm test
 
-    - name: Test ${{ matrix.test_number }}
-      run: make test-coverage-${{ matrix.node }}
-    - name: Coveralls Parallel
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.github_token }}
-        flag-name: run-${{ matrix.node }}
-        parallel: true
+      - name: Test ${{ matrix.test_number }}
+        run: make test-coverage-${{ matrix.node }}
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          flag-name: run-${{ matrix.node }}
+          parallel: true
 
   finish:
     needs: test
