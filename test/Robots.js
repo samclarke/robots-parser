@@ -649,6 +649,17 @@ describe('Robots', function () {
 		expect(robots.getCrawlDelay('b')).to.equal(undefined);
 	});
 
+	it('should handle UAs with object property names', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /fish',
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+		expect(robots.isAllowed('http://www.example.com/fish', 'constructor')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/fish', '__proto__')).to.equal(false);
+	});
+
 	it('should ignore version numbers in the UA string', function () {
 		var contents = [
 			'user-agent: *',

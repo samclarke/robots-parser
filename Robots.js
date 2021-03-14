@@ -282,7 +282,7 @@ function Robots(url, contents) {
 	this._url = parseUrl(url) || {};
 	this._url.port = this._url.port || 80;
 
-	this._rules = {};
+	this._rules = Object.create(null);
 	this._sitemaps = [];
 	this._preferredHost = null;
 
