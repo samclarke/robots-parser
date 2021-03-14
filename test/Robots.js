@@ -311,6 +311,7 @@ describe('Robots', function () {
 
 		var invalidUrls = [
 			'http://example.com/secret.html',
+			'http://ex ample.com/secret.html',
 			'http://www.example.net/test/index.html',
 			'http://www.examsple.com/test/',
 			'example.com/test/',
@@ -457,6 +458,18 @@ describe('Robots', function () {
 		].join('\n');
 
 		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+		expect(robots.isAllowed('/fish/test')).to.equal(undefined);
+		expect(robots.isAllowed('/fish')).to.equal(undefined);
+	});
+
+	it('should not treat invalid robots.txt URLs as relative', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /fish',
+			'Allow: /fish/test',
+		].join('\n');
+
+		var robots = robotsParser('https://ex ample.com/robots.txt', contents);
 		expect(robots.isAllowed('/fish/test')).to.equal(undefined);
 		expect(robots.isAllowed('/fish')).to.equal(undefined);
 	});
