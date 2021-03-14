@@ -15,6 +15,10 @@
 	},
 	"author": "Sam Clarke <sam@samclarke.com>",
 	"license": "MIT",
+	"files": [
+		"/Robots.js",
+		"/index.js"
+	],
 	"prettier": {
 		"tabWidth": 4,
 		"useTabs": true,
