@@ -272,7 +272,11 @@ function findRule(path, rules) {
  */
 function parseUrl(url) {
 	try {
-		return new URL(url);
+		// Specify a URL to be used with relative paths
+		// Using non-existent subdomain so can never cause conflict unless
+		// trying to crawl it but doesn't exist and even if tried worst that can
+		// happen is it allows relative URLs on it.
+		return new URL(url, 'http://robots-relative.samclarke.com/');
 	} catch (e) {
 		return null;
 	}
@@ -359,7 +363,7 @@ Robots.prototype._getRule = function (url, ua) {
 	var parsedUrl = parseUrl(url) || {};
 	var userAgent = formatUserAgent(ua || '*');
 
-	parsedUrl.port = parsedUrl.port || '80';
+	parsedUrl.port = parsedUrl.port || 80;
 
 	// The base URL must match otherwise this robots.txt is not valid for it.
 	if (

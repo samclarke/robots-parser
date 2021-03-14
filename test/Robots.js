@@ -437,6 +437,42 @@ describe('Robots', function () {
 		testRobots('http://www.eXample.com/robots.txt', contents, allowed, disallowed);
 	});
 
+	it('should handle relative paths', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /fish',
+			'Allow: /fish/test',
+		].join('\n');
+
+		var robots = robotsParser('/robots.txt', contents);
+		expect(robots.isAllowed('/fish/test')).to.equal(true);
+		expect(robots.isAllowed('/fish')).to.equal(false);
+	});
+
+	it('should not allow relative paths if domain specified', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /fish',
+			'Allow: /fish/test',
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+		expect(robots.isAllowed('/fish/test')).to.equal(undefined);
+		expect(robots.isAllowed('/fish')).to.equal(undefined);
+	});
+
+	it('should not allow URls if domain specified and robots.txt is relative', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /fish',
+			'Allow: /fish/test',
+		].join('\n');
+
+		var robots = robotsParser('/robots.txt', contents);
+		expect(robots.isAllowed('http://www.example.com/fish/test')).to.equal(undefined);
+		expect(robots.isAllowed('http://www.example.com/fish')).to.equal(undefined);
+	});
+
 	it('should allow all if empty robots.txt', function () {
 		var allowed = [
 			'http://www.example.com/secret.html',
