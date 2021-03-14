@@ -97,7 +97,7 @@ Returns the preferred host name specified by the `host:` directive or null if th
 
 ### Version 2.3.0:
 
- * Fixed bug where if the user-agent being checked is called "constructor" it would throw an error.
+ * Fixed bug where if the user-agent passed to `isAllowed()` / `isDisallowed()` is called "constructor" it would throw an error.
  * Added support for relative URLs. This does not affect the default behavior so can safely be upgraded.
  
    Relative matching is only allowed if both the robots.txt URL and the URLs being checked are relative.
