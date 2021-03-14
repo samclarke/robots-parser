@@ -86,7 +86,7 @@ function formatUserAgent(userAgent) {
 function normaliseEncoding(path) {
 	try {
 		return urlEncodeToUpper(encodeURI(path).replace(/%25/g, '%'));
-	} catch(e) {
+	} catch (e) {
 		return path;
 	}
 }
@@ -155,7 +155,10 @@ function matches(pattern, path) {
 			// does increment it and add it as a valid length, ignore if not.
 			var numMatches = 0;
 			for (var i = 0; i < numMatchingLengths; i++) {
-				if (matchingLengths[i] < path.length && path[matchingLengths[i]] === pattern[p]) {
+				if (
+					matchingLengths[i] < path.length &&
+					path[matchingLengths[i]] === pattern[p]
+				) {
 					matchingLengths[numMatches++] = matchingLengths[i] + 1;
 				}
 			}
@@ -182,7 +185,7 @@ function parseRobots(contents, robots) {
 
 	var currentUserAgents = [];
 	var isNoneUserAgentState = true;
-	for (var i=0; i < lines.length; i++) {
+	for (var i = 0; i < lines.length; i++) {
 		var line = lines[i];
 
 		if (!line || !line[0]) {
@@ -233,25 +236,29 @@ function parseRobots(contents, robots) {
  * @private
  */
 function findRule(path, rules) {
-   var matchingRule = null;
+	var matchedRule = null;
 
-   for (var i=0; i < rules.length; i++) {
-	   var rule = rules[i];
+	for (var i = 0; i < rules.length; i++) {
+		var rule = rules[i];
 
 		if (!matches(rule.pattern, path)) {
 			continue;
 		}
 
 		// The longest matching rule takes precedence
-		if (!matchingRule || rule.pattern.length > matchingRule.pattern.length) {
-			matchingRule = rule;
-		} else if (rule.pattern.length == matchingRule.pattern.length &&
-			rule.allow && !matchingRule.allow) {
-			matchingRule = rule;
+		// If rules are the same length then allow takes precedence
+		if (!matchedRule || rule.pattern.length > matchedRule.pattern.length) {
+			matchedRule = rule;
+		} else if (
+			rule.pattern.length == matchedRule.pattern.length &&
+			rule.allow &&
+			!matchedRule.allow
+		) {
+			matchedRule = rule;
 		}
-   }
+	}
 
-   return matchingRule;
+	return matchedRule;
 }
 
 /**
@@ -266,11 +273,10 @@ function findRule(path, rules) {
 function parseUrl(url) {
 	try {
 		return new URL(url);
-	} catch(e) {
+	} catch (e) {
 		return null;
 	}
 }
-
 
 function Robots(url, contents) {
 	this._url = parseUrl(url) || {};
@@ -356,14 +362,16 @@ Robots.prototype._getRule = function (url, ua) {
 	parsedUrl.port = parsedUrl.port || '80';
 
 	// The base URL must match otherwise this robots.txt is not valid for it.
-	if (parsedUrl.protocol !== this._url.protocol ||
+	if (
+		parsedUrl.protocol !== this._url.protocol ||
 		parsedUrl.hostname !== this._url.hostname ||
-		parsedUrl.port !== this._url.port) {
+		parsedUrl.port !== this._url.port
+	) {
 		return;
 	}
 
 	var rules = this._rules[userAgent] || this._rules['*'] || [];
-	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search)
+	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search);
 	var rule = findRule(path, rules);
 
 	return rule;
