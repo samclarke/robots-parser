@@ -38,7 +38,7 @@ var robots = robotsParser('http://www.example.com/robots.txt', [
 	'Host: example.com'
 ].join('\n'));
 
-robots.isAllowed('http://www.example.com/test.html', 'Sams-Bot/1.0'); // false
+robots.isAllowed('http://www.example.com/test.html', 'Sams-Bot/1.0'); // true
 robots.isAllowed('http://www.example.com/dir/test.html', 'Sams-Bot/1.0'); // true
 robots.isDisallowed('http://www.example.com/dir/test2.html', 'Sams-Bot/1.0'); // true
 robots.getCrawlDelay('Sams-Bot/1.0'); // 1
