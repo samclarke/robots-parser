@@ -17,7 +17,8 @@
 	"license": "MIT",
 	"files": [
 		"/Robots.js",
-		"/index.js"
+		"/index.js",
+		"/index.d.ts"
 	],
 	"prettier": {
 		"tabWidth": 4,
