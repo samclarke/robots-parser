@@ -97,6 +97,12 @@ Returns the preferred host name specified by the `host:` directive or null if th
 
 # Changes
 
+### Version 2.4.0:
+
+-   Added Typescript definitions  
+    &ndash; Thanks to @danhab99 for creating
+-   Added SECURITY.md policy and CodeQL scanning
+
 ### Version 2.3.0:
 
 -   Fixed bug where if the user-agent passed to `isAllowed()` / `isDisallowed()` is called "constructor" it would throw an error.
