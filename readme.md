@@ -27,19 +27,16 @@ or via Yarn:
 ```js
 var robotsParser = require('robots-parser');
 
-var robots = robotsParser(
-	'http://www.example.com/robots.txt',
-	[
-		'User-agent: *',
-		'Disallow: /dir/',
-		'Disallow: /test.html',
-		'Allow: /dir/test.html',
-		'Allow: /test.html',
-		'Crawl-delay: 1',
-		'Sitemap: http://example.com/sitemap.xml',
-		'Host: example.com'
-	].join('\n')
-);
+var robots = robotsParser('http://www.example.com/robots.txt', [
+	'User-agent: *',
+	'Disallow: /dir/',
+	'Disallow: /test.html',
+	'Allow: /dir/test.html',
+	'Allow: /test.html',
+	'Crawl-delay: 1',
+	'Sitemap: http://example.com/sitemap.xml',
+	'Host: example.com'
+].join('\n'));
 
 robots.isAllowed('http://www.example.com/test.html', 'Sams-Bot/1.0'); // true
 robots.isAllowed('http://www.example.com/dir/test.html', 'Sams-Bot/1.0'); // true
@@ -113,16 +110,13 @@ Returns the preferred host name specified by the `host:` directive or null if th
     For example:
 
     ```js
-    var robots = robotsParser(
-    	'/robots.txt',
-    	[
-    		'User-agent: *',
-    		'Disallow: /dir/',
-    		'Disallow: /test.html',
-    		'Allow: /dir/test.html',
-    		'Allow: /test.html'
-    	].join('\n')
-    );
+    var robots = robotsParser('/robots.txt', [
+        'User-agent: *',
+        'Disallow: /dir/',
+        'Disallow: /test.html',
+        'Allow: /dir/test.html',
+        'Allow: /test.html'
+    ].join('\n'));
 
     robots.isAllowed('/test.html', 'Sams-Bot/1.0'); // false
     robots.isAllowed('/dir/test.html', 'Sams-Bot/1.0'); // true
