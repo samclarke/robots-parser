@@ -1,7 +1,16 @@
 {
 	"name": "robots-parser",
 	"version": "2.3.0",
-	"description": "Robots.txt parser.",
+	"description": "NodeJS robots.txt parser with support for wildcard (*) matching.",
+	"keywords": [
+		"robots.txt",
+		"parser",
+		"user-agent",
+		"scraper",
+		"spider",
+		"bot",
+		"robots-exclusion-standard"
+	],
 	"main": "index.js",
 	"directories": {
 		"test": "tests"
