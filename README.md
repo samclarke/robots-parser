@@ -94,6 +94,10 @@ Returns the preferred host name specified by the `host:` directive or null if th
 
 # Changes
 
+### Version 3.0.0
+
+-   Changed to using global URL object instead of importing. &ndash; Thanks to @brendankenny
+
 ### Version 2.4.0:
 
 -   Added Typescript definitions  

@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 3.0.0
+
+-   Changed to using global URL object instead of importing. &ndash; Thanks to @brendankenny
+
 ## Version 2.4.0:
 
 -   Added Typescript definitions. &ndash; Thanks to @danhab99 for creating
