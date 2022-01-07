@@ -1,7 +1,7 @@
 {
 	"name": "robots-parser",
 	"version": "2.4.0",
-	"description": "NodeJS robots.txt parser with support for wildcard (*) matching.",
+	"description": "A specification compliant robots.txt parser with wildcard (*) matching support.",
 	"keywords": [
 		"robots.txt",
 		"parser",
@@ -15,6 +15,10 @@
 	"directories": {
 		"test": "tests"
 	},
+	"homepage": "https://github.com/samclarke/robots-parser",
+	"bugs": {
+		"url": "https://github.com/samclarke/robots-parser/issues"
+	},
 	"scripts": {
 		"test": "nyc --reporter=text-summary --reporter=html --reporter=lcovonly mocha"
 	},
@@ -27,8 +31,17 @@
 	"files": [
 		"/Robots.js",
 		"/index.js",
-		"/index.d.ts"
+		"/index.d.ts",
+		"/README.md",
+		"/LICENSE.md",
+		"/CHANGELOG.md",
+		"/SECURITY.md",
+		"test/*.js",
+		".gitignore"
 	],
+	"engines": {
+		"node": ">=0.10"
+	},
 	"prettier": {
 		"tabWidth": 4,
 		"useTabs": true,
