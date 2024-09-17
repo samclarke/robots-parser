@@ -861,4 +861,42 @@ describe('Robots', function () {
 
 		testRobots('https://www.example.com/robots.txt', contents, allowed, disallowed);
 	});
+
+	it('should not be disallowed when wildcard is used in explicit mode', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /',
+		].join('\n')
+
+		var url = 'https://www.example.com/hello'
+		var userAgent = 'SomeBot';
+		var robots = robotsParser(url, contents);
+
+		expect(robots.isDisallowed(url, userAgent, true)).to.equal(false)
+	})
+
+	it('should be disallowed when user agent equal robots rule in explicit mode', function () {
+		var contents = [
+			'User-agent: SomeBot',
+			'Disallow: /',
+		].join('\n')
+
+		var url = 'https://www.example.com/hello'
+		var userAgent = 'SomeBot';
+		var robots = robotsParser(url, contents);
+		
+		expect(robots.isDisallowed(url, userAgent, true)).to.equal(true)
+	})
+
+	it('should throw an error when user agent is not set in explicit mode', function () {
+		var contents = [
+			'User-agent: SomeBot',
+			'Disallow: /',
+		].join('\n')
+
+		var url = 'https://www.example.com/hello'
+		var robots = robotsParser(url, contents);
+		
+		expect(robots.isDisallowed.bind(robots, url, undefined, true)).to.throw("User Agent must be specified in explicit mode")
+	})	
 });

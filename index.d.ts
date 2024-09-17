@@ -2,7 +2,7 @@ declare module 'robots-parser';
 
 interface Robot {
 	isAllowed(url: string, ua?: string): boolean | undefined;
-	isDisallowed(url: string, ua?: string): boolean | undefined;
+	isDisallowed(url: string, ua?: string, explicit?: boolean): boolean | undefined;
 	getMatchingLineNumber(url: string, ua?: string): number;
 	getCrawlDelay(ua?: string): number | undefined;
 	getSitemaps(): string[];

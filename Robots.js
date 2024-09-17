@@ -361,7 +361,7 @@ Robots.prototype.setPreferredHost = function (url) {
 	this._preferredHost = url;
 };
 
-Robots.prototype._getRule = function (url, ua) {
+Robots.prototype._getRule = function (url, ua, explicit) {
 	var parsedUrl = parseUrl(url) || {};
 	var userAgent = formatUserAgent(ua || '*');
 
@@ -374,7 +374,12 @@ Robots.prototype._getRule = function (url, ua) {
 		return;
 	}
 
-	var rules = this._rules[userAgent] || this._rules['*'] || [];
+	var rules = this._rules[userAgent];
+	if (!explicit) {
+		rules = rules || this._rules['*']
+	}
+	rules = rules || []
+
 	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search);
 	var rule = findRule(path, rules);
 
@@ -422,15 +427,50 @@ Robots.prototype.getMatchingLineNumber = function (url, ua) {
 };
 
 /**
- * Returns the opposite of isAllowed()
- *
+ * In standard mode, it returns the opposite of is allowed().
+ * In explicit mode, it will return:
+ *  - true if the the agent is explicitly disallowed (wildcard non included),
+ * 	- throws an error if the user agent is not specified,
+ * 	- and false otherwise.
  * @param  {string}  url
  * @param  {string}  ua
  * @return {boolean}
  */
-Robots.prototype.isDisallowed = function (url, ua) {
-	return !this.isAllowed(url, ua);
+Robots.prototype.isDisallowed = function (url, ua, explicit) {
+	if ((explicit === true) && (ua === undefined)) {
+		throw new Error("User Agent must be specified in explicit mode")
+	}
+
+	var rule = this._getRule(url, ua, explicit);
+	if (typeof rule === 'undefined') {
+		return true;
+	}
+	return !(!rule || rule.allow);
 };
+
+Robots.prototype.isExplicitlyDisallowed = function(url, ua) {	
+	var parsedUrl = parseUrl(url) || {};
+	var userAgent = formatUserAgent(ua);
+
+	// The base URL must match otherwise this robots.txt is not valid for it.
+	if (
+		parsedUrl.protocol !== this._url.protocol ||
+		parsedUrl.hostname !== this._url.hostname ||
+		parsedUrl.port !== this._url.port
+	) {
+		return;
+	}
+
+	var rules = this._rules[userAgent] || [];
+	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search);
+	var rule = findRule(path, rules);
+
+	if (typeof rule === 'undefined') {
+		return;
+	}
+
+	return !(!rule || rule.allow);
+}
 
 /**
  * Gets the crawl delay if there is one.
