@@ -397,7 +397,7 @@ Robots.prototype._getRule = function (url, ua, explicit) {
  * @return {boolean?}
  */
 Robots.prototype.isAllowed = function (url, ua) {
-	var rule = this._getRule(url, ua);
+	var rule = this._getRule(url, ua, false);
 
 	if (typeof rule === 'undefined') {
 		return;
@@ -421,54 +421,36 @@ Robots.prototype.isAllowed = function (url, ua) {
  * @return {number?}
  */
 Robots.prototype.getMatchingLineNumber = function (url, ua) {
-	var rule = this._getRule(url, ua);
+	var rule = this._getRule(url, ua, false);
 
 	return rule ? rule.lineNumber : -1;
 };
 
 /**
- * In standard mode, it returns the opposite of is allowed().
- * In explicit mode, it will return:
- *  - true if the the agent is explicitly disallowed (wildcard non included),
- * 	- throws an error if the user agent is not specified,
- * 	- and false otherwise.
+ * Returns the opposite of isAllowed()
+ *
  * @param  {string}  url
- * @param  {string}  ua
+ * @param  {string?}  ua
  * @return {boolean}
  */
-Robots.prototype.isDisallowed = function (url, ua, explicit) {
-	if ((explicit === true) && (ua === undefined)) {
-		throw new Error("User Agent must be specified in explicit mode")
-	}
+Robots.prototype.isDisallowed = function (url, ua) {
+	return !this.isAllowed(url, ua);
+};
 
-	var rule = this._getRule(url, ua, explicit);
+/**
+ * Returns trues if explicitly disallowed 
+ * for the specified user agent (User Agent wildcards are discarded).
+ * 
+ * This will return undefined if the URL is not valid for this robots.txt file.
+ * @param  {string}  url
+ * @param  {string}  ua
+ * @return {boolean?}
+ */
+Robots.prototype.isExplicitlyDisallowed = function(url, ua) {	
+	var rule = this._getRule(url, ua, true);
 	if (typeof rule === 'undefined') {
 		return true;
 	}
-	return !(!rule || rule.allow);
-};
-
-Robots.prototype.isExplicitlyDisallowed = function(url, ua) {	
-	var parsedUrl = parseUrl(url) || {};
-	var userAgent = formatUserAgent(ua);
-
-	// The base URL must match otherwise this robots.txt is not valid for it.
-	if (
-		parsedUrl.protocol !== this._url.protocol ||
-		parsedUrl.hostname !== this._url.hostname ||
-		parsedUrl.port !== this._url.port
-	) {
-		return;
-	}
-
-	var rules = this._rules[userAgent] || [];
-	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search);
-	var rule = findRule(path, rules);
-
-	if (typeof rule === 'undefined') {
-		return;
-	}
-
 	return !(!rule || rule.allow);
 }
 
