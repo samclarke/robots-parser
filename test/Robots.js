@@ -873,7 +873,7 @@ describe('Robots', function () {
 		var robots = robotsParser(url, contents);
 
 		expect(robots.isExplicitlyDisallowed(url, userAgent)).to.equal(false)
-	})
+	});
 
 	it('should be disallowed when user agent equal robots rule in explicit mode', function () {
 		var contents = [
@@ -886,5 +886,18 @@ describe('Robots', function () {
 		var robots = robotsParser(url, contents);
 		
 		expect(robots.isExplicitlyDisallowed(url, userAgent)).to.equal(true)
-	})
+	});
+
+	it('should return undefined when given an invalid URL in explicit mode', function () {
+		var contents = [
+			'User-agent: SomeBot',
+			'Disallow: /',
+		].join('\n')
+
+		var url = 'https://www.example.com/hello'
+		var userAgent = 'SomeBot';
+		var robots = robotsParser('http://example.com', contents);
+		
+		expect(robots.isExplicitlyDisallowed(url, userAgent)).to.equal(undefined)
+	});
 });
