@@ -361,7 +361,7 @@ Robots.prototype.setPreferredHost = function (url) {
 	this._preferredHost = url;
 };
 
-Robots.prototype._getRule = function (url, ua) {
+Robots.prototype._getRule = function (url, ua, explicit) {
 	var parsedUrl = parseUrl(url) || {};
 	var userAgent = formatUserAgent(ua || '*');
 
@@ -374,7 +374,12 @@ Robots.prototype._getRule = function (url, ua) {
 		return;
 	}
 
-	var rules = this._rules[userAgent] || this._rules['*'] || [];
+	var rules = this._rules[userAgent];
+	if (!explicit) {
+		rules = rules || this._rules['*']
+	}
+	rules = rules || []
+
 	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search);
 	var rule = findRule(path, rules);
 
@@ -392,7 +397,7 @@ Robots.prototype._getRule = function (url, ua) {
  * @return {boolean?}
  */
 Robots.prototype.isAllowed = function (url, ua) {
-	var rule = this._getRule(url, ua);
+	var rule = this._getRule(url, ua, false);
 
 	if (typeof rule === 'undefined') {
 		return;
@@ -416,7 +421,7 @@ Robots.prototype.isAllowed = function (url, ua) {
  * @return {number?}
  */
 Robots.prototype.getMatchingLineNumber = function (url, ua) {
-	var rule = this._getRule(url, ua);
+	var rule = this._getRule(url, ua, false);
 
 	return rule ? rule.lineNumber : -1;
 };
@@ -425,12 +430,29 @@ Robots.prototype.getMatchingLineNumber = function (url, ua) {
  * Returns the opposite of isAllowed()
  *
  * @param  {string}  url
- * @param  {string}  ua
+ * @param  {string?}  ua
  * @return {boolean}
  */
 Robots.prototype.isDisallowed = function (url, ua) {
 	return !this.isAllowed(url, ua);
 };
+
+/**
+ * Returns trues if explicitly disallowed 
+ * for the specified user agent (User Agent wildcards are discarded).
+ * 
+ * This will return undefined if the URL is not valid for this robots.txt file.
+ * @param  {string}  url
+ * @param  {string}  ua
+ * @return {boolean?}
+ */
+Robots.prototype.isExplicitlyDisallowed = function(url, ua) {	
+	var rule = this._getRule(url, ua, true);
+	if (typeof rule === 'undefined') {
+		return true;
+	}
+	return !(!rule || rule.allow);
+}
 
 /**
  * Gets the crawl delay if there is one.

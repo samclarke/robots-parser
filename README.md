@@ -6,7 +6,7 @@ The parser currently supports:
 
 -   User-agent:
 -   Allow:
--   Disallow:
+-   Disallow (with explicit mode support):
 -   Sitemap:
 -   Crawl-delay:
 -   Host:
@@ -41,6 +41,7 @@ var robots = robotsParser('http://www.example.com/robots.txt', [
 robots.isAllowed('http://www.example.com/test.html', 'Sams-Bot/1.0'); // true
 robots.isAllowed('http://www.example.com/dir/test.html', 'Sams-Bot/1.0'); // true
 robots.isDisallowed('http://www.example.com/dir/test2.html', 'Sams-Bot/1.0'); // true
+robots.isExplicitlyDisallowed('http://www.example.com/dir/test2.html', 'Sams-Bot/1.0'); // false
 robots.getCrawlDelay('Sams-Bot/1.0'); // 1
 robots.getSitemaps(); // ['http://example.com/sitemap.xml']
 robots.getPreferredHost(); // example.com
@@ -62,6 +63,13 @@ Returns true if crawling the specified URL is not allowed for the specified user
 
 This will return `undefined` if the URL isn't valid for this robots.txt.
 
+### isExplicitlyDisallowed(url, ua)
+
+**boolean or undefined**
+
+Returns trues if explicitly disallowed for the specified user agent (User Agent wildcards are discarded).
+
+This will return undefined if the URL is not valid for this robots.txt file.
 ### getMatchingLineNumber(url, [ua])
 
 **number or undefined**
