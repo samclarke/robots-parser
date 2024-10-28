@@ -376,9 +376,9 @@ Robots.prototype._getRule = function (url, ua, explicit) {
 
 	var rules = this._rules[userAgent];
 	if (!explicit) {
-		rules = rules || this._rules['*']
+		rules = rules || this._rules['*'];
 	}
-	rules = rules || []
+	rules = rules || [];
 
 	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search);
 	var rule = findRule(path, rules);
@@ -438,21 +438,23 @@ Robots.prototype.isDisallowed = function (url, ua) {
 };
 
 /**
- * Returns trues if explicitly disallowed 
+ * Returns trues if explicitly disallowed
  * for the specified user agent (User Agent wildcards are discarded).
- * 
+ *
  * This will return undefined if the URL is not valid for this robots.txt file.
+ *
  * @param  {string}  url
  * @param  {string}  ua
  * @return {boolean?}
  */
-Robots.prototype.isExplicitlyDisallowed = function(url, ua) {	
+Robots.prototype.isExplicitlyDisallowed = function (url, ua) {
 	var rule = this._getRule(url, ua, true);
 	if (typeof rule === 'undefined') {
-		return true;
+		return;
 	}
+
 	return !(!rule || rule.allow);
-}
+};
 
 /**
  * Gets the crawl delay if there is one.

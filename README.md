@@ -67,9 +67,19 @@ This will return `undefined` if the URL isn't valid for this robots.txt.
 
 **boolean or undefined**
 
+> [!CAUTION]
+> This is not part of the robots.txt specification and should only be used with
+> the websites owners permission.
+> This method is only intended for special purposes where a user-agent shouldn't
+> fallback to matching against global (*) rules.
+>
+> An example of this behaviour is [Google AdsBot](https://developers.google.com/search/docs/crawling-indexing/google-special-case-crawlers)
+> which must be explicitly excluded. This is done with the website owners permission.
+
 Returns trues if explicitly disallowed for the specified user agent (User Agent wildcards are discarded).
 
 This will return undefined if the URL is not valid for this robots.txt file.
+
 ### getMatchingLineNumber(url, [ua])
 
 **number or undefined**
