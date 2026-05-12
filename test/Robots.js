@@ -14,6 +14,13 @@ function testRobots(url, contents, allowed, disallowed) {
 	});
 }
 
+function testInvalidUrls(robots, urls) {
+	urls.forEach(function (url) {
+		expect(robots.isAllowed(url)).to.equal(undefined);
+		expect(robots.isDisallowed(url)).to.equal(undefined);
+	});
+}
+
 describe('Robots', function () {
 	it('should parse the disallow directive', function () {
 		var contents = [
@@ -320,9 +327,7 @@ describe('Robots', function () {
 
 		var robots = robotsParser('http://www.example.com/robots.txt', contents);
 
-		invalidUrls.forEach(function (url) {
-			expect(robots.isAllowed(url)).to.equal(undefined);
-		});
+		testInvalidUrls(robots, invalidUrls);
 	});
 
 	it('should handle Unicode, urlencoded and punycode URLs', function () {
@@ -805,13 +810,21 @@ describe('Robots', function () {
 		];
 
 		var disallowed = [
+			'http://www.example.com:8080/fish/index.php',
+			'http://www.example.com:8080/fish/',
+			'http://www.example.com:8080/test.html'
+		];
+
+		var invalid = [
 			'http://www.example.com/fish',
 			'http://www.example.com/Test.html',
 			'http://www.example.com:80/fish',
 			'http://www.example.com:80/Test.html'
 		];
 
+		var robots = robotsParser('http://www.example.com:8080/robots.txt', contents);
 		testRobots('http://www.example.com:8080/robots.txt', contents, allowed, disallowed);
+		testInvalidUrls(robots, invalid);
 	});
 
 	it('should default to port 80 for http: if no port given', function () {
@@ -827,14 +840,19 @@ describe('Robots', function () {
 		];
 
 		var disallowed = [
-			'http://www.example.com:443/fish',
-			'http://www.example.com:443/Test.html',
 			'http://www.example.com:80/fish/index.php',
 			'http://www.example.com:80/fish/',
 			'http://www.example.com:80/test.html'
 		];
 
+		var invalid = [
+			'http://www.example.com:443/fish',
+			'http://www.example.com:443/Test.html'
+		];
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+		testInvalidUrls(robots, invalid);
 	});
 
 	it('should default to port 443 for https: if no port given', function () {
@@ -852,14 +870,19 @@ describe('Robots', function () {
 		];
 
 		var disallowed = [
-			'http://www.example.com:80/fish',
-			'http://www.example.com:80/Test.html',
-			'http://www.example.com:443/fish/index.php',
-			'http://www.example.com:443/fish/',
-			'http://www.example.com:443/test.html'
+			'https://www.example.com:443/fish/index.php',
+			'https://www.example.com:443/fish/',
+			'https://www.example.com:443/test.html'
 		];
 
+		var invalid = [
+			'http://www.example.com:80/fish',
+			'http://www.example.com:80/Test.html'
+		];
+
+		var robots = robotsParser('https://www.example.com/robots.txt', contents);
 		testRobots('https://www.example.com/robots.txt', contents, allowed, disallowed);
+		testInvalidUrls(robots, invalid);
 	});
 
 	it('should not be disallowed when wildcard is used in explicit mode', function () {
