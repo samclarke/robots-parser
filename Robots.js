@@ -429,12 +429,21 @@ Robots.prototype.getMatchingLineNumber = function (url, ua) {
 /**
  * Returns the opposite of isAllowed()
  *
+ * Will return undefined if the URL is not valid for
+ * this robots.txt file.
+ *
  * @param  {string}  url
  * @param  {string?}  ua
- * @return {boolean}
+ * @return {boolean?}
  */
 Robots.prototype.isDisallowed = function (url, ua) {
-	return !this.isAllowed(url, ua);
+	var allowed = this.isAllowed(url, ua);
+
+	if (typeof allowed === 'undefined') {
+		return;
+	}
+
+	return !allowed;
 };
 
 /**
