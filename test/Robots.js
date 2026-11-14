@@ -6,11 +6,11 @@ function testRobots(url, contents, allowed, disallowed) {
 	var robots = robotsParser(url, contents);
 
 	allowed.forEach(function (url) {
-		expect(robots.isAllowed(url)).to.equal(true);
+		expect(robots.isAllowed(url), `should allow url: ${url}`).to.equal(true);
 	});
 
 	disallowed.forEach(function (url) {
-		expect(robots.isDisallowed(url)).to.equal(true);
+		expect(robots.isDisallowed(url), `should reject url: ${url}`).to.equal(true);
 	});
 }
 
@@ -65,14 +65,20 @@ describe('Robots', function () {
 			'User-agent: *',
 			'Disallow: /fish*.php',
 			'Disallow: /*.dext$',
-			'Disallow: /dir*'
+			'Disallow: /dir*',
+			'Disallow: /tester$',
+			'Disallow: /a*b*c',
+			'Disallow: /x*$'
 		].join('\n');
 
 		var allowed = [
 			'http://www.example.com/Fish.PHP',
 			'http://www.example.com/Fish.dext1',
 			'http://www.example.com/folder/dir.html',
-			'http://www.example.com/folder/dir/test.html'
+			'http://www.example.com/folder/dir/test.html',
+			'http://www.example.com/testers',
+			'http://www.example.com/something/tester',
+			'http://www.example.com/something/ab'
 		];
 
 		var disallowed = [
@@ -81,7 +87,84 @@ describe('Robots', function () {
 			'http://www.example.com/AnYthInG.dext',
 			'http://www.example.com/Fish.dext.dext',
 			'http://www.example.com/dir/test.html',
-			'http://www.example.com/directory.html'
+			'http://www.example.com/directory.html',
+			'http://www.example.com/tester',
+			'http://www.example.com/abc',
+			'http://www.example.com/axbxcx',
+			'http://www.example.com/x',
+			'http://www.example.com/xyz'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should parse empty patterns', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: ****$'
+		].join('\n');
+
+		var allowed = [];
+
+		var disallowed = [
+			'http://www.example.com/',
+			'http://www.example.com/test.html'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should handle end patterns that start and end with same pattern', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /a$',
+			'Disallow: /abc$'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/abca',
+			'http://www.example.com/abcXYZabc'
+		];
+
+		var disallowed = [
+			'http://www.example.com/a',
+			'http://www.example.com/abc'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should handle empty end patterns', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: $',
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/',
+			'http://www.example.com/test.html'
+		];
+
+		var disallowed = [];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should not match start and end of wildcard end patterns twice', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: a*a$',
+			'Disallow: *a*a$',
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/a',
+			'http://www.example.com/ba'
+		];
+
+		var disallowed = [
+			'http://www.example.com/axa',
+			'http://www.example.com/xaxa'
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
@@ -792,6 +875,123 @@ describe('Robots', function () {
 		expect(end - start).to.be.lessThan(500);
 	});
 
+	it('should handle a long pattern after a leading wildcard', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /*' + 'test123testing'.repeat(100)
+		].join('\n');
+
+
+		var allowed = [
+			'http://www.example.com/' + 'test123testing'.repeat(99),
+		];
+
+		var disallowed = [
+			'http://www.example.com/' + 'test123testing'.repeat(100000) + 'b',
+			'http://www.example.com/b' + 'test123testing'.repeat(100000),
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should handle long repeating patterns', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /' + 'test123testing'.repeat(100) + '*' + 'test123testing'.repeat(100),
+		].join('\n');
+
+
+		var allowed = [
+			'http://www.example.com/' + 'test123testing'.repeat(199),
+		];
+
+		var disallowed = [
+			'http://www.example.com/' + 'test123testing'.repeat(100000) + 'b',
+			'http://www.example.com/' + 'test123testing'.repeat(100) + 'x' + 'test123testing'.repeat(100),
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should not have N*M performance for large N or M', function () {
+		const n = 100000;
+
+		var contents = [
+			'User-agent: *',
+			'Disallow: /*' + 'a'.repeat(Math.floor(n / 2)) + 'b',
+			'Disallow: /*b' + 'a'.repeat(Math.floor(n / 2)),
+		].join('\n');
+
+
+		var allowed = [
+			'http://www.example.com/' + 'a'.repeat(n),
+			'http://www.example.com/x' + 'a'.repeat(n),
+			'http://www.example.com/' + 'x'.repeat(Math.floor(n / 2)) + 'x'+ 'a'.repeat(n/2),
+		];
+
+		var disallowed = [
+			'http://www.example.com/' + 'a'.repeat(Math.floor(n / 2)) + 'b',
+			'http://www.example.com/b' + 'a'.repeat(n),
+		];
+
+		const start = performance.now();
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+		const end = performance.now();
+
+		// Should take less than 500 ms (high to allow for variableness of
+		// machines running the test, should normally be much less)
+		expect(end - start).to.be.lessThan(500);
+	});
+
+	it('should not have N*M performance for large N or M with wildcards', function () {
+		const n = 100000;
+
+		var contents = [
+			'User-agent: *',
+			'Disallow: /' + 'a*'.repeat(Math.floor(n / 2)) + 'b',
+			'Disallow: /b' + 'a*'.repeat(Math.floor(n / 2)),
+		].join('\n');
+
+
+		var allowed = [
+			'http://www.example.com/' + 'a'.repeat(n),
+		];
+
+		var disallowed = [
+			'http://www.example.com/' + 'a'.repeat(Math.floor(n / 2)) + 'b',
+			'http://www.example.com/b' + 'a'.repeat(n),
+		];
+
+		const start = performance.now();
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+		const end = performance.now();
+
+		// Should take less than 500 ms (high to allow for variableness of
+		// machines running the test, should normally be much less)
+		expect(end - start).to.be.lessThan(500);
+	});
+
+	it('should find matches in long paths that the bad character shift could skip', function () {
+		// Forces the Boyer-Moore path in indexOf() (part length >= 10 and
+		// part length * path length >= 500000). The only run of 10 a's starts
+		// right after the mismatched 'b', which the old bad character shift
+		// of m skipped over.
+		var contents = [
+			'User-agent: *',
+			'Disallow: /*aaaaaaaaaa'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/b' + 'a'.repeat(9) + 'c'.repeat(100000)
+		];
+
+		var disallowed = [
+			'http://www.example.com/b' + 'a'.repeat(10) + 'c'.repeat(100000)
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
 	it('should honor given port number', function () {
 		var contents = [
 			'User-agent: *',
@@ -899,5 +1099,18 @@ describe('Robots', function () {
 		var robots = robotsParser('http://example.com', contents);
 		
 		expect(robots.isExplicitlyDisallowed(url, userAgent)).to.equal(undefined)
+	});
+
+	it('should return false when no matching rule specified calling isDisallowed()', function () {
+		var contents = [
+			'User-agent: OtherBot',
+			'Disallow: /',
+		].join('\n')
+
+		var url = 'https://example.com/hello'
+		var userAgent = 'SomeBot';
+		var robots = robotsParser('https://example.com', contents);
+		
+		expect(robots.isDisallowed(url, userAgent)).to.equal(false)
 	});
 });
