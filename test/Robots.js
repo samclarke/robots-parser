@@ -1113,4 +1113,23 @@ describe('Robots', function () {
 		
 		expect(robots.isDisallowed(url, userAgent)).to.equal(false)
 	});
+
+	it('should ignore content beyond the 2 MiB parsing limit', function () {
+        var contents = [
+                'User-agent: *',
+                'Disallow: /within-limit',
+                '#' + 'a'.repeat(2097152),
+                'Disallow: /beyond-limit'
+        ].join('\n');
+
+		var allowed = [
+			'http://www.example.com/beyond-limit'
+		];
+
+		var disallowed = [
+			'http://www.example.com/within-limit'
+		];
+
+        testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
 });
