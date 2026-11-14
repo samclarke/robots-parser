@@ -176,6 +176,10 @@ function matches(pattern, path) {
 function parseRobots(contents, robots) {
 	var newlineRegex = /\r\n|\r|\n/;
 	var lines = contents
+		// Limit to ~2 mb (could be larger due to unicode but this deals with
+		// chars makes no difference for this case) which is 4x larger than
+		// Google's limit of 500 kb and the minimum required by the spec
+		.substring(0, 2097152)
 		.split(newlineRegex)
 		.map(removeComments)
 		.map(splitLine)
