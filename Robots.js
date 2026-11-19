@@ -105,69 +105,221 @@ function urlEncodeToUpper(path) {
 }
 
 /**
- * Matches a pattern with the specified path
  *
- * Uses same algorithm to match patterns as the Google implementation in
- * google/robotstxt so it should be consistent with the spec.
+ * @param {string} pattern
+ * @returns {Float64Array}
+ */
+function makeGoodSuffixTable(pattern) {
+	const m = pattern.length;
+	// Float64 is the same as number in JS so will allow indexing up to the spec
+	// limit of a JS string length 2^(53 - 1). Most implementations cap strings
+	// significantly below that limit and and no pattern should ever be that
+	// long, so Uint32Array could be used but Float64Array has the same
+	// performance so might as well be spec compliant.
+	const suffixes = new Float64Array(m);
+	const goodSuffixTable = new Float64Array(m).fill(m);
+
+	suffixes[m - 1] = m;
+	let g = m - 1;
+	let f = 0;
+
+	for (let i = m - 2; i >= 0; --i) {
+		if (i > g && suffixes[i + m - 1 - f] < i - g) {
+			suffixes[i] = suffixes[i + m - 1 - f];
+		} else {
+			if (i < g) {
+				g = i;
+			}
+
+			f = i;
+			while (g >= 0 && pattern[g] === pattern[g + m - 1 - f]) {
+				g--;
+			}
+			suffixes[i] = f - g;
+		}
+	}
+
+	let j = 0;
+	for (let i = m - 1; i >= 0; i--) {
+		if (suffixes[i] === i + 1) {
+			for (; j < m - 1 - i; j++) {
+				goodSuffixTable[j] = m - 1 - i;
+			}
+		}
+	}
+
+	for (let i = 0; i <= m - 2; i++) {
+		goodSuffixTable[m - 1 - suffixes[i]] = m - 1 - i;
+	}
+
+	return goodSuffixTable;
+}
+
+/**
+ * Boyer-Moore which returns on the first match. This has a worst case of O(N)
+ * time and O(M) space.
  *
- * @see https://github.com/google/robotstxt/blob/f465f0ede81099dd8bc4aeb2966b3a892bd488b3/robots.cc#L74
+ * It is not O(N*M) worst case as it stops at first match. If it was finding all
+ * matches, then it would be O(N+R*M) which would be O(N*M) worst case for a
+ * repeating character string. The Galil rule changes that to linear matching
+ * when finding all matches but as this is only getting first match it is O(N).
+ *
+ * @param {string} needle
+ * @param {string} haystack
+ * @param {number} startIndex
+ * @returns {number}
+ */
+function boyerMoore(needle, haystack, startIndex) {
+	const n = haystack.length;
+	const m = needle.length;
+
+	if (n < m || startIndex < 0 || startIndex > n - m) {
+		return -1;
+	}
+
+	const badCharacterTable = new Map();
+	for (let i = 0; i < m - 1; i++) {
+		badCharacterTable.set(needle[i], m - 1 - i);
+	}
+
+	const goodSuffixTable = makeGoodSuffixTable(needle);
+
+	let j = startIndex;
+	while (j <= n - m) {
+		let i = m - 1;
+
+		while (i >= 0 && needle[i] === haystack[j + i]) {
+			i--;
+		}
+
+		if (i < 0) {
+			return j;
+		}
+
+		const matchedLength = m - 1 - i;
+		const badCharacterShift = badCharacterTable.has(haystack[j + i])
+			? badCharacterTable.get(haystack[j + i]) - matchedLength
+			: m - matchedLength;
+		const goodSuffixShift = goodSuffixTable[i];
+
+		j += Math.max(goodSuffixShift, badCharacterShift, 1);
+	}
+
+	return -1;
+}
+
+/**
+ * @param {string} needle
+ * @param {string} haystack
+ * @param {Number} index
+ * @returns {Number}
+ */
+function indexOf(needle, haystack, index) {
+	if (needle === '') {
+		return index;
+	}
+
+	const n = haystack.length - index;
+
+	// For small M, native indexOf() even if O(N*M) is faster
+	// The worst case N*M when N = 1000 is also faster so anything less is fine
+	// As the worst case of N = 1000 is 500000 (M=500, N=1000) anything taking
+	// less than that should also fine. This covers most paths and patterns.
+	if (needle.length < 10 || n < 1000 || needle.length * n < 500000) {
+		return haystack.indexOf(needle, index);
+	}
+
+	return boyerMoore(needle, haystack, index);
+}
+
+/**
+ * This algorithm is O(N + ∑ indexOf(part)) making the worst case for this the
+ * same as indexOf().
+ *
+ * V8: For large N uses Boyer-Moore-Horspool which falls back to Boyer-Moore for
+ * bad inputs. The Boyer-Moore implementation has a limit on table sizes so it
+ * could be O(N*M) but previous strategies look like they match, at least some,
+ * inputs that would cause O(N*M). It's worst case appears to be O(N) although
+ * there maybe some inputs that can get though and cause O(N*M) behaviour.
+ * https://sourcegraph.com/r/github.com/v8/v8/-/blob/src/strings/string-search.h?L297
+ * JSC: Same as V8
+ * https://github.com/WebKit/WebKit/blob/main/Source/WTF/wtf/text/AdaptiveStringSearcher.h
+ * SpiderMonkey: For large N uses SIMD with O(N*M) worst case
+ * https://searchfox.org/firefox-main/source/js/src/builtin/String.cpp#2179
+ *
+ * Base on the above, this will have a worst case of either O(N) or O(N*M) in
+ * V8 and JSC, and  O(N*M) on SpiderMonkey.
+ *
+ * Because of this, it makes sense to use an O(N) algorithm although due to the
+ * amount of setup, and the fact it isn't written in native code, the JS
+ * implementation of Boyer-Moore is slower for small N so we fall back to the
+ * native indexOf for them.
+ *
+ * BoyersMoore with N=2,000,000 (with 2,000,000 robots.txt limit) is ~24ms which
+ * seems like a safe limit as neither Chrome nor Safari can process anything
+ * larger and the defaults for most servers are significantly lower:
+ *
+ * - Chrome displays up to ~32,000 chars and supports up to 2MB
+ * - Safari ~80,000 chars
+ * - Firefox displays up to ~64,000 chars but supports longer
+ * - Cloudflare 16kb
+ * - Nginx 4kb (can be configured larger)
+ * - Apache 8kb (can be configured larger)
+ * - IIS 16kb (can be configured larger)
+ *
+ * How this works:
+ *
+ * This splits a pattern at wildcards, it finds the first match for each part of
+ * the pattern. It then skips to find the first match for the next part and so
+ * on, if it reaches the end then it matches, if not, it doesn't.
+ *
+ * This never needs to backtrack as always does minimum required and any string
+ * that doesn't match the minimum will not match.
+ *
+ * If has an end anchor, it checks the last part matches the end. This is
+ * correct as there will be a * between he last part and the remainder which
+ * means anything between will match.
+ *
  * @param {string} pattern
  * @param {string} path
- * @return {boolean}
+ * @returns {boolean}
  * @private
  */
 function matches(pattern, path) {
-	// I've added extra comments to try make this easier to understand
+	const hasEndAnchor = pattern.endsWith('$');
 
-	// Stores the lengths of all the current matching substrings.
-	// Maximum number of possible matching lengths is every length in path plus
-	// 1 to handle 0 length too (if pattern starts with * which is zero or more)
-	var matchingLengths = new Array(path.length + 1);
-	var numMatchingLengths = 1;
+	// Remove duplicate wildcards and end anchor and split into parts
+	const parts = pattern.replace(/\*+/g, '*').replace(/\$$/, '').split('*');
 
-	// Initially longest match is 0
-	matchingLengths[0] = 0;
+	// End anchor with no wildcards means must be 100% equal
+	if (hasEndAnchor && parts.length === 1) {
+		return path === parts[0];
+	}
 
-	for (var p = 0; p < pattern.length; p++) {
-		// If $ is at the end of pattern then we must match the whole path.
-		// Which is true if the longest matching length matches path length
-		if (pattern[p] === '$' && p + 1 === pattern.length) {
-			return matchingLengths[numMatchingLengths - 1] === path.length;
+	// Must always start with first part. If pattern is *test the parts will be
+	// ['', 'test'] and '' will always match which is correct for *
+	if (!path.startsWith(parts[0])) {
+		return false;
+	}
+
+	// Make sure end part (if there is any parts) matches.
+	// Can't exit early if only two parts as a*a$ would match "a" so need to
+	// continue to full matching loop if this matches
+	if (hasEndAnchor && !path.endsWith(parts[parts.length - 1])) {
+		return false;
+	}
+
+	let pathIndex = parts[0].length;
+	// This isn't N*N as it starts at pathIndex index and never backtracks, so
+	// the worst case is indexOf(part) + indexOf(part) + ...
+	// making it the same worst case as indexOf()
+	for (let i = 1; i < parts.length; i++) {
+		const index = indexOf(parts[i], path, pathIndex);
+		if (index < 0) {
+			return false;
 		}
 
-		// Handle wildcards
-		if (pattern[p] == '*') {
-			// Wildcard so all substrings minus the current smallest matching
-			// length are matches
-			numMatchingLengths = path.length - matchingLengths[0] + 1;
-
-			// Update matching lengths to include the smallest all the way up
-			// to numMatchingLengths
-			// Don't update smallest possible match as * matches zero or more
-			// so the smallest current match is also valid
-			for (var i = 1; i < numMatchingLengths; i++) {
-				matchingLengths[i] = matchingLengths[i - 1] + 1;
-			}
-		} else {
-			// Check the char at the matching length matches the pattern, if it
-			// does increment it and add it as a valid length, ignore if not.
-			var numMatches = 0;
-			for (var i = 0; i < numMatchingLengths; i++) {
-				if (
-					matchingLengths[i] < path.length &&
-					path[matchingLengths[i]] === pattern[p]
-				) {
-					matchingLengths[numMatches++] = matchingLengths[i] + 1;
-				}
-			}
-
-			// No paths matched the current pattern char so not a match
-			if (numMatches == 0) {
-				return false;
-			}
-
-			numMatchingLengths = numMatches;
-		}
+		pathIndex = index + parts[i].length;
 	}
 
 	return true;
@@ -176,6 +328,10 @@ function matches(pattern, path) {
 function parseRobots(contents, robots) {
 	var newlineRegex = /\r\n|\r|\n/;
 	var lines = contents
+		// Limit to ~2 mb (could be larger due to unicode but this deals with
+		// chars makes no difference for this case) which is 4x larger than
+		// Google's limit of 500 kb and the minimum required by the spec
+		.substring(0, 2097152)
 		.split(newlineRegex)
 		.map(removeComments)
 		.map(splitLine)
@@ -286,6 +442,10 @@ function parseUrl(url) {
 	}
 }
 
+/**
+ * @param {string} url
+ * @param {string} contents
+ */
 function Robots(url, contents) {
 	this._url = parseUrl(url) || {};
 	this._rules = Object.create(null);
@@ -381,9 +541,7 @@ Robots.prototype._getRule = function (url, ua, explicit) {
 	rules = rules || [];
 
 	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search);
-	var rule = findRule(path, rules);
-
-	return rule;
+	return findRule(path, rules);
 };
 
 /**
