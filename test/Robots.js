@@ -458,7 +458,8 @@ describe('Robots', function () {
 			'Disallow: /%E2%9C%A4*t$',
 			'Disallow: /✿%a',
 			'Disallow: /http%3A%2F%2Fexample.org',
-			'Disallow: /%E0'
+			'Disallow: /%E0',
+			'Disallow: /%00test'
 		].join('\n');
 
 		var allowed = [
@@ -466,6 +467,7 @@ describe('Robots', function () {
 			'http://www.example.com/%E2%9C%BCtesting',
 			'http://www.example.com/✤testing',
 			'http://www.example.com/%E2%9C%A4testing',
+			'http://www.example.com/%00allow',
 		];
 
 		var disallowed = [
@@ -490,7 +492,26 @@ describe('Robots', function () {
 			'http://www.example.com/✿%a',
 			'http://www.example.com/%E2%9C%BF%atest',
 			'http://www.example.com/http%3A%2F%2Fexample.org',
-			'http://www.example.com/%E0test'
+			'http://www.example.com/%E0test',
+			'http://www.example.com/%00test'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should handle urlencoded path segments', function () {
+		var contents = [
+			'User-agent: *',
+			'Allow: /test%2Ftest',
+			'Disallow: /test/test'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/test%2Ftest',
+		];
+
+		var disallowed = [
+			'http://www.example.com/test/test'
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);

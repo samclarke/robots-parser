@@ -83,22 +83,33 @@ function formatUserAgent(userAgent) {
  */
 function normaliseEncoding(path) {
 	try {
-		return encodeURI(safeDecodeURI(path));
+		// Encode any non-ASCII chars
+		return safeDecodeURI(path).replace(/[^\x00-\x7F]/gu, (char) => {
+			return encodeURIComponent(char).toUpperCase();
+		});
 	} catch (e) {
 		return path;
 	}
 }
 
 /**
+ * Only decodes alpha numeric and - . _ ~ characters and converts all others to
+ * uppercase.
  * @param {string} path
  */
 function safeDecodeURI(path) {
-	return path.replace(/(?:%[0-9A-Fa-f]{2})+/g, (match) => {
-		try {
-			return decodeURIComponent(match);
-		} catch {
-			return match;
-		}
+	return path.replace(/%[0-9a-f]{2}/gi, (match) => {
+		const code = parseInt(match.slice(1), 16);
+		const isUnreserved =
+			(code >= 0x41 && code <= 0x5a) || // A-Z
+			(code >= 0x61 && code <= 0x7a) || // a-z
+			(code >= 0x30 && code <= 0x39) || // 0-9
+			code === 0x2d || // -
+			code === 0x2e || // .
+			code === 0x5f || // _
+			code === 0x7e; // ~
+
+		return isUnreserved ? String.fromCharCode(code) : match.toUpperCase();
 	});
 }
 
