@@ -336,7 +336,13 @@ function parseRobots(contents, robots) {
 		.map(trimLine);
 
 	var currentUserAgents = [];
-	var isNoneUserAgentState = true;
+	/**
+	 * Used to allow crawl-delay and any other non-standard directives to have
+	 * their own grouping without affecting the RFC standard groupings.
+	 */
+	var currentNoneStandardUserAgents = [];
+	var isGroupTermination = true;
+	var isNoneStandardGroupTermination = true;
 	for (var i = 0; i < lines.length; i++) {
 		var line = lines[i];
 
@@ -344,14 +350,23 @@ function parseRobots(contents, robots) {
 			continue;
 		}
 
-		switch (line[0].toLowerCase()) {
+		const rule = line[0].toLowerCase();
+		switch (rule) {
 			case 'user-agent':
-				if (isNoneUserAgentState) {
+				if (isGroupTermination) {
 					currentUserAgents.length = 0;
 				}
 
+				if (isNoneStandardGroupTermination) {
+					currentNoneStandardUserAgents.length = 0;
+				}
+
 				if (line[1]) {
-					currentUserAgents.push(formatUserAgent(line[1]));
+					const userAgent = formatUserAgent(line[1]);
+					currentUserAgents.push(userAgent);
+					currentNoneStandardUserAgents.push(userAgent);
+
+					robots._rules[userAgent] = robots._rules[userAgent] || [];
 				}
 				break;
 			case 'disallow':
@@ -361,7 +376,7 @@ function parseRobots(contents, robots) {
 				robots.addRule(currentUserAgents, line[1], true, i + 1);
 				break;
 			case 'crawl-delay':
-				robots.setCrawlDelay(currentUserAgents, line[1]);
+				robots.setCrawlDelay(currentNoneStandardUserAgents, line[1]);
 				break;
 			case 'sitemap':
 				if (line[1]) {
@@ -375,7 +390,8 @@ function parseRobots(contents, robots) {
 				break;
 		}
 
-		isNoneUserAgentState = line[0].toLowerCase() !== 'user-agent';
+		isGroupTermination = rule === 'allow' || rule === 'disallow';
+		isNoneStandardGroupTermination = rule !== 'user-agent';
 	}
 }
 
@@ -466,8 +482,6 @@ Robots.prototype.addRule = function (userAgents, pattern, allow, lineNumber) {
 	var rules = this._rules;
 
 	userAgents.forEach(function (userAgent) {
-		rules[userAgent] = rules[userAgent] || [];
-
 		if (!pattern) {
 			return;
 		}
@@ -491,8 +505,6 @@ Robots.prototype.setCrawlDelay = function (userAgents, delayStr) {
 	var delay = Number(delayStr);
 
 	userAgents.forEach(function (userAgent) {
-		rules[userAgent] = rules[userAgent] || [];
-
 		if (isNaN(delay)) {
 			return;
 		}

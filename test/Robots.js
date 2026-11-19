@@ -385,6 +385,19 @@ describe('Robots', function () {
 		expect(robots.isAllowed("http://www.example.com/fish", "agenta")).to.equal(false);
 	});
 
+	it('should not fallback to * when specified but empty', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /fish',
+			'User-agent: agent',
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+
+		expect(robots.isAllowed("http://www.example.com/fish", "agent-other")).to.equal(false);
+		expect(robots.isAllowed("http://www.example.com/fish", "agent")).to.equal(true);
+	});
+
 	it('should return undefined for invalid urls', function () {
 		var contents = [
 			'User-agent: *',
@@ -748,6 +761,27 @@ describe('Robots', function () {
 	});
 
 	it('should fallback to * when a UA has no rules of its own', function () {
+        var contents = [
+			'User-agent: *',
+			'Disallow: /a',
+
+			'user-agent: b',
+			'Disallow: /b',
+
+			'user-agent: c',
+			'user-agent: d',
+			'Disallow: /c',
+        ].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+
+		expect(robots.isAllowed('http://www.example.com/a', 'should-fall-back')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/a', 'd')).to.equal(true);
+		expect(robots.isAllowed('http://www.example.com/c', 'should-fall-back')).to.equal(true);
+		expect(robots.isAllowed('http://www.example.com/c', 'd')).to.equal(false);
+	});
+
+	it('should have crawl-delay fallback to * when a UA has no rules of its own', function () {
 		var contents = [
 			'user-agent: *',
 			'crawl-delay: 1',
