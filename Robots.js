@@ -551,6 +551,10 @@ Robots.prototype._getRule = function (url, ua, explicit) {
 	rules = rules || [];
 
 	var path = normaliseEncoding(parsedUrl.pathname + parsedUrl.search);
+	// The /robots.txt URI is implicitly allowed
+	if (path === '/robots.txt') {
+		return null;
+	}
 
 	return findRule(path, rules);
 };
