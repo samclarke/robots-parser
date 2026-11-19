@@ -1,5 +1,7 @@
 var robotsParser = require('../index');
 var expect = require('chai').expect;
+const fs = require('fs');
+const path = require('path')
 
 
 function testRobots(url, contents, allowed, disallowed) {
@@ -397,7 +399,7 @@ describe('Robots', function () {
 		expect(robots.isAllowed("http://www.example.com/fish", "agent-other")).to.equal(false);
 		expect(robots.isAllowed("http://www.example.com/fish", "agent")).to.equal(true);
 	});
-
+	
 	it('should return undefined for invalid urls', function () {
 		var contents = [
 			'User-agent: *',
@@ -1165,5 +1167,18 @@ describe('Robots', function () {
 		];
 
         testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should pass rfc9309-test-vectors.json tests', function () {
+		const file = path.resolve(__dirname,'./rfc9309-test-vectors.json')
+		const testVectors = JSON.parse(fs.readFileSync(file, 'utf8'));
+
+		testVectors.vectors.forEach(vector => {
+			const robots = robotsParser('http://www.example.com/robots.txt', vector.robots_txt);
+			const result = robots.isAllowed('http://www.example.com' + vector.path, vector.user_agent);
+			const expected = vector.expected === "allowed";
+
+			expect(result, `should pass test id "${vector.id}"`).to.equal(expected);
+		});
 	});
 });
