@@ -83,24 +83,22 @@ function formatUserAgent(userAgent) {
  */
 function normaliseEncoding(path) {
 	try {
-		return urlEncodeToUpper(encodeURI(path).replace(/%25/g, '%'));
+		return encodeURI(safeDecodeURI(path));
 	} catch (e) {
 		return path;
 	}
 }
 
 /**
- * Convert URL encodings to support case.
- *
- * e.g.: %2a%ef becomes %2A%EF
- *
  * @param {string} path
- * @return {string}
- * @private
  */
-function urlEncodeToUpper(path) {
-	return path.replace(/%[0-9a-fA-F]{2}/g, function (match) {
-		return match.toUpperCase();
+function safeDecodeURI(path) {
+	return path.replace(/(?:%[0-9A-Fa-f]{2})+/g, (match) => {
+		try {
+			return decodeURIComponent(match);
+		} catch {
+			return match;
+		}
 	});
 }
 
@@ -540,7 +538,8 @@ Robots.prototype._getRule = function (url, ua, explicit) {
 	}
 	rules = rules || [];
 
-	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search);
+	var path = normaliseEncoding(parsedUrl.pathname + parsedUrl.search);
+
 	return findRule(path, rules);
 };
 

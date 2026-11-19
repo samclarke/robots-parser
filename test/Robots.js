@@ -442,7 +442,8 @@ describe('Robots', function () {
 			'Disallow: /✼*t$',
 			'Disallow: /%E2%9C%A4*t$',
 			'Disallow: /✿%a',
-			'Disallow: /http%3A%2F%2Fexample.org'
+			'Disallow: /http%3A%2F%2Fexample.org',
+			'Disallow: /%E0'
 		].join('\n');
 
 		var allowed = [
@@ -450,8 +451,6 @@ describe('Robots', function () {
 			'http://www.example.com/%E2%9C%BCtesting',
 			'http://www.example.com/✤testing',
 			'http://www.example.com/%E2%9C%A4testing',
-			'http://www.example.com/http://example.org',
-			'http://www.example.com/http:%2F%2Fexample.org'
 		];
 
 		var disallowed = [
@@ -475,7 +474,8 @@ describe('Robots', function () {
 			'http://www.example.com/%E2%9C%A4testt',
 			'http://www.example.com/✿%a',
 			'http://www.example.com/%E2%9C%BF%atest',
-			'http://www.example.com/http%3A%2F%2Fexample.org'
+			'http://www.example.com/http%3A%2F%2Fexample.org',
+			'http://www.example.com/%E0test'
 		];
 
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
