@@ -112,6 +112,31 @@ Returns the preferred host name specified by the `host:` directive or null if th
 
 # Changes
 
+## Version 3.1.0
+
+-   Updated README to point to RFC 9309 instead of the draft specification.
+    &ndash; Thanks to @joepie91 for reporting.
+-   Added `isExplicitlyDisallowed()` method.
+    &ndash; Thanks to @AuDigent for implementing.
+-   Fixed grouping to match RFC 9309 by not treating non-standard directives like crawl-delay as terminating a group.
+    &ndash; Thanks to @bensynapse for reporting.
+-   Fixed URL encoded path handling to match RFC 9309.
+    &ndash; Thanks to @bensynapse for reporting.
+-   Fixed bug with /robots.txt not being implicitly allowed as required by RFC 9309.
+    &ndash; Thanks to @bensynapse for reporting.
+-   Fixed bug with user-agent not followed by any directives not creating new group.
+    &ndash; Thanks to @bensynapse for reporting.
+-   Added Synapse rfc9309-test-vectors.json tests.
+
+    RFC 9309 test vectors by Synapse, https://synapsereality.io/open-source/answer-crawler-check/rfc9309-test-vectors/, CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
+-   Fixed user-agent to be more restrictive in what it accepts as a name to match RFC 9309.
+-   Added parsing limit of 2097152 characters.
+-   Changed the matching algorithm to a linear `O(N)` instead of `O(M*N)` worst case.
+
+    The previous matching algorithm was one from google/robotstxt which was used to ensure compatibility with any edge cases. This new algorithm should be fully compatible.
+
+    &ndash; Thanks to @EQSTLab for reporting.
+
 ### Version 3.0.1
 
 -   Fixed bug with `https:` URLs defaulting to port `80` instead of `443` if no port is specified.
