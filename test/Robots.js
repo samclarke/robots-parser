@@ -870,6 +870,33 @@ describe('Robots', function () {
 		expect(robots.getCrawlDelay('b / 1.0')).to.equal(12);
 	});
 
+	it('should ignore spaces UA string', function () {
+		var contents = [
+			'user-agent: *',
+			'disallow:',
+
+			'user-agent: b foo',
+			'disallow: /b',
+
+			'user-agent: c',
+			'disallow: /c'
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+		
+		expect(robots.isAllowed('http://www.example.com/b', 'b')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/b', 'b foo')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/b', 'b anything')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/b', 'bC')).to.equal(true);
+		expect(robots.isAllowed('http://www.example.com/b', 'b-c')).to.equal(true);
+
+		expect(robots.isAllowed('http://www.example.com/c', 'c')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/c', 'c foo')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/c', 'c anything')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/c', 'cC')).to.equal(true);
+		expect(robots.isAllowed('http://www.example.com/c', 'c-c')).to.equal(true);
+	});
+
 
 	it('should return the line number of the matching directive', function () {
 		var contents = [

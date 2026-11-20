@@ -63,14 +63,15 @@ function splitLine(line) {
  */
 function formatUserAgent(userAgent) {
 	var formattedUserAgent = userAgent.toLowerCase();
-
-	// Strip the version number from robot/1.0 user agents
-	var idx = formattedUserAgent.indexOf('/');
-	if (idx > -1) {
-		formattedUserAgent = formattedUserAgent.substr(0, idx);
+	if (formattedUserAgent[0] === '*') {
+		return '*';
 	}
 
-	return formattedUserAgent.trim();
+	// 2.2.1. The User-Agent Line
+	// The product token MUST contain only uppercase and lowercase letters
+	// ("a-z" and "A-Z"), underscores ("_"), and hyphens ("-"). The
+	var match = formattedUserAgent.match(/^[a-zA-Z_-]+/);
+	return match && match[0] ? match[0] : '';
 }
 
 /**
