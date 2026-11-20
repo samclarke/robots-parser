@@ -1,0 +1,1288 @@
+{
+  "name": "RFC 9309 robots.txt test vectors",
+  "version": "1.0.0",
+  "released": "2026-11-16",
+  "url": "https://synapsereality.io/open-source/answer-crawler-check/rfc9309-test-vectors.json",
+  "page": "https://synapsereality.io/open-source/answer-crawler-check/rfc9309-test-vectors/",
+  "publisher": {
+    "name": "Synapse",
+    "url": "https://synapsereality.io/"
+  },
+  "licence": {
+    "name": "CC BY 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/",
+    "covers": "The vectors as we wrote them: the crawler names, paths, expected results, deciding rules, groups and reasons, and the robots.txt texts we wrote.",
+    "excludes": "Text taken from RFC 9309 is the IETF Trust's: the sentences in rfc.quote, and the robots.txt texts copied from the RFC's figures and examples. This licence does not cover them.",
+    "credit": "RFC 9309 test vectors by Synapse, https://synapsereality.io/open-source/answer-crawler-check/rfc9309-test-vectors/, CC BY 4.0, https://creativecommons.org/licenses/by/4.0/"
+  },
+  "standard": {
+    "name": "RFC 9309, Robots Exclusion Protocol",
+    "url": "https://www.rfc-editor.org/rfc/rfc9309.html",
+    "text": "https://www.rfc-editor.org/rfc/rfc9309.txt",
+    "text_sha256": "f633915daaa15b943cae56545d333bcf3ba4d156599e4555499686d6699fb207",
+    "read": "2026-11-16"
+  },
+  "derived_from": {
+    "package": "answer-crawler-check",
+    "version": "0.1.2",
+    "repository": "https://github.com/synapsereality/answer-crawler-check",
+    "commit": "85ac226fdd8a30205954deeedfd3571cbe348b9d",
+    "file": "tests/robots.test.js"
+  },
+  "matcher": {
+    "package": "answer-crawler-check",
+    "version": "0.1.2",
+    "note": "matcher_differs is true where this release of the matcher does not give the expected result. Every other vector passes on it."
+  },
+  "fields": {
+    "id": "A stable name for the vector. It never changes once published.",
+    "robots_txt": "The whole robots.txt file, as a string. Line ends are part of the test.",
+    "user_agent": "The product token of the crawler asking.",
+    "path": "The path and query of the URL to test, as the crawler would request it.",
+    "expected": "allowed or disallowed, as RFC 9309 reads the file.",
+    "decided_by": "The rule that decides the result: its line number in robots_txt, counted from 1, and its text without a comment. null when no rule decides: no rule matched, no group applied, or the path is /robots.txt.",
+    "group": "Which group the crawler obeys: own (a group that names it), * (the * group) or none.",
+    "rfc": "The section of RFC 9309 the vector tests, and the sentence it tests, word for word. level is the requirement keyword in that sentence, or null when it has none.",
+    "reason": "Why the result follows, in a sentence or two.",
+    "from": "Where the vector comes from. tool-test is a test of answer-crawler-check, named in test. rfc is an example or a sentence of RFC 9309. sandbox is the list of differences on the robots.txt sandbox page.",
+    "matcher_differs": "true when release 0.1.2 of the answer-crawler-check matcher gives the other result.",
+    "difference": "Present when matcher_differs is true. The id of the difference in the differences list."
+  },
+  "differences": [
+    {
+      "id": "unreserved-escape",
+      "summary": "The matcher compares a percent-encoded unreserved character as written. A rule for /private does not match the path /%70rivate, and RFC 9309 says it should.",
+      "section": "2.2.2"
+    },
+    {
+      "id": "other-record-ends-group",
+      "summary": "The matcher ends a run of user-agent lines at a line that is not a rule, such as Crawl-delay. The names above that line get none of the rules below it. RFC 9309 keeps them in one group.",
+      "section": "2.2.4"
+    }
+  ],
+  "vectors": [
+    {
+      "id": "named-group-is-obeyed",
+      "robots_txt": "User-agent: *\nDisallow: /\n\nUser-agent: ExampleBot\nAllow: /\n",
+      "user_agent": "ExampleBot",
+      "path": "/page",
+      "expected": "allowed",
+      "decided_by": {
+        "line": 5,
+        "rule": "Allow: /"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.1",
+        "level": "MUST",
+        "quote": "Crawlers MUST use case-insensitive matching to find the group that matches the product token and then obey the rules of the group."
+      },
+      "reason": "ExampleBot has a group of its own, so it obeys that group and not the * group.",
+      "from": {
+        "kind": "tool-test",
+        "test": "a named group overrides the wildcard group entirely"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "star-group-when-no-group-matches",
+      "robots_txt": "User-agent: *\nDisallow: /\n\nUser-agent: ExampleBot\nAllow: /\n",
+      "user_agent": "OtherBot",
+      "path": "/page",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.1",
+        "level": "MUST",
+        "quote": "If no matching group exists, crawlers MUST obey the group with a user-agent line with the \"*\" value, if present."
+      },
+      "reason": "No group names OtherBot, so it obeys the * group.",
+      "from": {
+        "kind": "tool-test",
+        "test": "a named group overrides the wildcard group entirely"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "named-group-takes-nothing-from-star",
+      "robots_txt": "User-agent: *\nDisallow: /private/\n\nUser-agent: ExampleBot\nDisallow: /x/\n",
+      "user_agent": "ExampleBot",
+      "path": "/private/a",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "own",
+      "rfc": {
+        "section": "2.2.2",
+        "level": null,
+        "quote": "If no match is found amongst the rules in a group for a matching user-agent or there are no rules in the group, the URI is allowed."
+      },
+      "reason": "The rule for /private/ is in the * group. ExampleBot obeys only its own group, where no rule matches.",
+      "from": {
+        "kind": "tool-test",
+        "test": "a named group does not inherit the wildcard rules"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "product-token-any-case",
+      "robots_txt": "User-agent: examplebot\nDisallow: /\n",
+      "user_agent": "ExampleBot",
+      "path": "/",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.1",
+        "level": "MUST",
+        "quote": "Crawlers MUST use case-insensitive matching to find the group that matches the product token and then obey the rules of the group."
+      },
+      "reason": "The group names examplebot in lower case, and the name still matches ExampleBot.",
+      "from": {
+        "kind": "tool-test",
+        "test": "agent names match case-insensitively and by product token"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "sitemap-keeps-names-in-one-group-first",
+      "robots_txt": "User-agent: ExampleBot\nSitemap: https://example.com/sitemap.xml\nUser-agent: OtherBot\nDisallow: /\n",
+      "user_agent": "ExampleBot",
+      "path": "/a",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 4,
+        "rule": "Disallow: /"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.4",
+        "level": "MUST NOT",
+        "quote": "Parsing of other records MUST NOT interfere with the parsing of explicitly defined records in Section 2. For example, a \"Sitemaps\" record MUST NOT terminate a group."
+      },
+      "reason": "A Sitemap line between two user-agent lines does not end the group, so the rule below applies to both names.",
+      "from": {
+        "kind": "tool-test",
+        "test": "consecutive User-agent lines share one group, and Sitemap does not split it"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "sitemap-keeps-names-in-one-group-second",
+      "robots_txt": "User-agent: ExampleBot\nSitemap: https://example.com/sitemap.xml\nUser-agent: OtherBot\nDisallow: /\n",
+      "user_agent": "OtherBot",
+      "path": "/a",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 4,
+        "rule": "Disallow: /"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.4",
+        "level": "MUST NOT",
+        "quote": "Parsing of other records MUST NOT interfere with the parsing of explicitly defined records in Section 2. For example, a \"Sitemaps\" record MUST NOT terminate a group."
+      },
+      "reason": "The second name of the same group gets the same rule.",
+      "from": {
+        "kind": "tool-test",
+        "test": "consecutive User-agent lines share one group, and Sitemap does not split it"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "groups-for-one-name-merge-disallow",
+      "robots_txt": "User-agent: ExampleBot\nAllow: /\n\nUser-agent: ExampleBot\nDisallow: /secret\n",
+      "user_agent": "ExampleBot",
+      "path": "/secret/x",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 5,
+        "rule": "Disallow: /secret"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.1",
+        "level": "MUST",
+        "quote": "If there is more than one group matching the user-agent, the matching groups' rules MUST be combined into one group and parsed according to Section 2.2.2."
+      },
+      "reason": "Both groups name ExampleBot and count as one. Disallow: /secret is the longer match.",
+      "from": {
+        "kind": "tool-test",
+        "test": "groups naming the same agent twice are merged"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "groups-for-one-name-merge-allow",
+      "robots_txt": "User-agent: ExampleBot\nAllow: /\n\nUser-agent: ExampleBot\nDisallow: /secret\n",
+      "user_agent": "ExampleBot",
+      "path": "/open",
+      "expected": "allowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Allow: /"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.1",
+        "level": "MUST",
+        "quote": "If there is more than one group matching the user-agent, the matching groups' rules MUST be combined into one group and parsed according to Section 2.2.2."
+      },
+      "reason": "In the merged group only Allow: / matches /open.",
+      "from": {
+        "kind": "tool-test",
+        "test": "groups naming the same agent twice are merged"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "longest-match-disallow",
+      "robots_txt": "User-agent: *\nDisallow: /blog/\nAllow: /blog/public/\nDisallow: /tie\nAllow: /tie\n",
+      "user_agent": "ExampleBot",
+      "path": "/blog/secret",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /blog/"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "MUST",
+        "quote": "The most specific match found MUST be used. The most specific match is the match that has the most octets."
+      },
+      "reason": "Only Disallow: /blog/ matches.",
+      "from": {
+        "kind": "tool-test",
+        "test": "longest match wins and Allow wins a tie"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "longest-match-allow",
+      "robots_txt": "User-agent: *\nDisallow: /blog/\nAllow: /blog/public/\nDisallow: /tie\nAllow: /tie\n",
+      "user_agent": "ExampleBot",
+      "path": "/blog/public/post",
+      "expected": "allowed",
+      "decided_by": {
+        "line": 3,
+        "rule": "Allow: /blog/public/"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "MUST",
+        "quote": "The most specific match found MUST be used. The most specific match is the match that has the most octets."
+      },
+      "reason": "Allow: /blog/public/ and Disallow: /blog/ both match. The allow rule has more octets, so it decides.",
+      "from": {
+        "kind": "tool-test",
+        "test": "longest match wins and Allow wins a tie"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "allow-wins-a-tie",
+      "robots_txt": "User-agent: *\nDisallow: /blog/\nAllow: /blog/public/\nDisallow: /tie\nAllow: /tie\n",
+      "user_agent": "ExampleBot",
+      "path": "/tie",
+      "expected": "allowed",
+      "decided_by": {
+        "line": 5,
+        "rule": "Allow: /tie"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "SHOULD",
+        "quote": "If an \"allow\" rule and a \"disallow\" rule are equivalent, then the \"allow\" rule SHOULD be used."
+      },
+      "reason": "Allow: /tie and Disallow: /tie are the same length, so the allow rule is used.",
+      "from": {
+        "kind": "tool-test",
+        "test": "longest match wins and Allow wins a tie"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "dollar-ends-the-pattern",
+      "robots_txt": "User-agent: *\nDisallow: /*.pdf$\n",
+      "user_agent": "ExampleBot",
+      "path": "/files/a.pdf",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /*.pdf$"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates the end of the match pattern."
+      },
+      "reason": "The path ends in .pdf, where the $ says the pattern ends.",
+      "from": {
+        "kind": "tool-test",
+        "test": "wildcards and end anchors"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "dollar-and-a-query",
+      "robots_txt": "User-agent: *\nDisallow: /*.pdf$\n",
+      "user_agent": "ExampleBot",
+      "path": "/files/a.pdf?x=1",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates the end of the match pattern."
+      },
+      "reason": "The query follows .pdf, so the path does not end where the $ says the pattern ends.",
+      "from": {
+        "kind": "tool-test",
+        "test": "wildcards and end anchors"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "asterisk-then-prefix",
+      "robots_txt": "User-agent: *\nDisallow: /*.html\n",
+      "user_agent": "ExampleBot",
+      "path": "/a/b.html?x",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /*.html"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates 0 or more instances of any character."
+      },
+      "reason": "The * covers a/b, and with no $ the rest of the path may follow.",
+      "from": {
+        "kind": "tool-test",
+        "test": "wildcards and end anchors"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "slash-matches-every-path",
+      "robots_txt": "User-agent: *\nDisallow: /\n",
+      "user_agent": "ExampleBot",
+      "path": "/anything",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": null,
+        "quote": "The match evaluates positively if and only if the end of the path from the rule is reached before a difference in octets is encountered."
+      },
+      "reason": "The end of the rule path / is reached before any difference, so it matches.",
+      "from": {
+        "kind": "tool-test",
+        "test": "wildcards and end anchors"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "dollar-blocks-a-longer-path",
+      "robots_txt": "User-agent: *\nDisallow: /a$\n",
+      "user_agent": "ExampleBot",
+      "path": "/ab",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates the end of the match pattern."
+      },
+      "reason": "The $ asks for the path to end after /a, and /ab goes on.",
+      "from": {
+        "kind": "tool-test",
+        "test": "wildcards and end anchors"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "two-asterisks-and-dollar",
+      "robots_txt": "User-agent: *\nDisallow: /a*b*c$\n",
+      "user_agent": "ExampleBot",
+      "path": "/axxbyyc",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /a*b*c$"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates 0 or more instances of any character."
+      },
+      "reason": "Each * covers a run of characters, xx and yy here, and the path ends at c.",
+      "from": {
+        "kind": "tool-test",
+        "test": "wildcards and end anchors"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "asterisk-matches-nothing",
+      "robots_txt": "User-agent: ExampleBot\nDisallow: /*\n",
+      "user_agent": "ExampleBot",
+      "path": "/",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /*"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates 0 or more instances of any character."
+      },
+      "reason": "The * may stand for no characters at all, so /* matches the path /.",
+      "from": {
+        "kind": "tool-test",
+        "test": "wildcards and end anchors"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "empty-file",
+      "robots_txt": "",
+      "user_agent": "ExampleBot",
+      "path": "/a",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "none",
+      "rfc": {
+        "section": "2.2.1",
+        "level": null,
+        "quote": "If no group matches the product token and there is no group with a user-agent line with the \"*\" value, or no groups are present at all, no rules apply."
+      },
+      "reason": "An empty file has no groups, so no rules apply.",
+      "from": {
+        "kind": "tool-test",
+        "test": "empty Disallow allows everything; no rules at all allows everything"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "group-with-no-rules",
+      "robots_txt": "User-agent: ExampleBot\n",
+      "user_agent": "ExampleBot",
+      "path": "/a",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "own",
+      "rfc": {
+        "section": "2.1",
+        "level": null,
+        "quote": "The last group may have no rules, which means it implicitly allows everything."
+      },
+      "reason": "The only group names ExampleBot and has no rules.",
+      "from": {
+        "kind": "tool-test",
+        "test": "empty Disallow allows everything; no rules at all allows everything"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "robots-txt-is-allowed",
+      "robots_txt": "User-agent: *\nDisallow: /\n",
+      "user_agent": "ExampleBot",
+      "path": "/robots.txt",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": null,
+        "quote": "The /robots.txt URI is implicitly allowed."
+      },
+      "reason": "Disallow: / would match, but /robots.txt is always allowed.",
+      "from": {
+        "kind": "tool-test",
+        "test": "robots.txt itself is always allowed"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "comment-after-a-rule",
+      "robots_txt": "User-agent: * # everyone\r\nDisallow: /tmp # scratch\r\n",
+      "user_agent": "ExampleBot",
+      "path": "/tmp/1",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /tmp"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates a line comment."
+      },
+      "reason": "The text after # is a comment, so the rule is Disallow: /tmp. The lines end in CR LF.",
+      "from": {
+        "kind": "tool-test",
+        "test": "comments, CRLF and a byte order mark"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "comment-does-not-widen-a-rule",
+      "robots_txt": "User-agent: * # everyone\r\nDisallow: /tmp # scratch\r\n",
+      "user_agent": "ExampleBot",
+      "path": "/ok",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates a line comment."
+      },
+      "reason": "Without its comment the rule is Disallow: /tmp, which does not match /ok.",
+      "from": {
+        "kind": "tool-test",
+        "test": "comments, CRLF and a byte order mark"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "carriage-return-line-ends",
+      "robots_txt": "User-agent: *\rDisallow: /tmp\r",
+      "user_agent": "ExampleBot",
+      "path": "/tmp/1",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /tmp"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2",
+        "level": null,
+        "quote": "NL = %x0D / %x0A / %x0D.0A"
+      },
+      "reason": "A lone CR ends a line too, so the file has a user-agent line and a rule.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2, the ABNF"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "non-ascii-rule-and-encoded-path",
+      "robots_txt": "User-agent: *\nDisallow: /über\n",
+      "user_agent": "ExampleBot",
+      "path": "/%C3%BCber/a",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /über"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "MUST",
+        "quote": "Octets in the URI and robots.txt paths outside the range of the ASCII coded character set, and those in the reserved range defined by [RFC3986], MUST be percent-encoded as defined by [RFC3986] prior to comparison."
+      },
+      "reason": "The ü of the rule is encoded as %C3%BC before the comparison, which matches the path.",
+      "from": {
+        "kind": "tool-test",
+        "test": "non-ASCII paths and escapes compare equal"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "encoded-rule-and-non-ascii-path",
+      "robots_txt": "User-agent: *\nDisallow: /%E2%82%AC\n",
+      "user_agent": "ExampleBot",
+      "path": "/€",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /%E2%82%AC"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "MUST",
+        "quote": "Octets in the URI and robots.txt paths outside the range of the ASCII coded character set, and those in the reserved range defined by [RFC3986], MUST be percent-encoded as defined by [RFC3986] prior to comparison."
+      },
+      "reason": "The € of the path is encoded as %E2%82%AC before the comparison, which matches the rule.",
+      "from": {
+        "kind": "tool-test",
+        "test": "non-ASCII paths and escapes compare equal"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "empty-line-inside-a-group",
+      "robots_txt": "User-agent: *\n\nDisallow: /admin\n",
+      "user_agent": "ExampleBot",
+      "path": "/admin/a",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 3,
+        "rule": "Disallow: /admin"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2",
+        "level": null,
+        "quote": "*(startgroupline / emptyline)"
+      },
+      "reason": "An empty line between the user-agent line and the rule does not end the group.",
+      "from": {
+        "kind": "tool-test",
+        "test": "the rule that decided is reported with its line"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "path-case-is-kept",
+      "robots_txt": "User-agent: *\nDisallow: /Blog\n",
+      "user_agent": "ExampleBot",
+      "path": "/blog",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "SHOULD",
+        "quote": "The matching SHOULD be case sensitive."
+      },
+      "reason": "The rule says /Blog and the path is /blog. With case sensitive matching they differ.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.2"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "match-starts-at-the-first-octet",
+      "robots_txt": "User-agent: *\nDisallow: /private\n",
+      "user_agent": "ExampleBot",
+      "path": "/public/private",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "MUST",
+        "quote": "The matching MUST start with the first octet of the path."
+      },
+      "reason": "The rule path appears inside the URL path, but not at its start.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.2"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "rule-before-any-group",
+      "robots_txt": "Disallow: /\n\nUser-agent: *\nDisallow: /tmp/\n",
+      "user_agent": "ExampleBot",
+      "path": "/page",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "SHOULD",
+        "quote": "The crawler SHOULD ignore \"disallow\" and \"allow\" rules that are not in any group (for example, any rule that precedes the first user-agent line)."
+      },
+      "reason": "The Disallow: / on line 1 comes before any user-agent line, so it belongs to no group.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.2"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "user-agent-line-starts-a-new-group",
+      "robots_txt": "User-agent: ExampleBot\nDisallow: /a\nUser-agent: OtherBot\nDisallow: /b\n",
+      "user_agent": "ExampleBot",
+      "path": "/b",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "own",
+      "rfc": {
+        "section": "2.1",
+        "level": null,
+        "quote": "The group is terminated by a user-agent line or end of file."
+      },
+      "reason": "The user-agent line for OtherBot ends the ExampleBot group, so Disallow: /b is not ExampleBot's.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "no-group-and-no-star",
+      "robots_txt": "User-agent: OtherBot\nDisallow: /\n",
+      "user_agent": "ExampleBot",
+      "path": "/x",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "none",
+      "rfc": {
+        "section": "2.2.1",
+        "level": null,
+        "quote": "If no group matches the product token and there is no group with a user-agent line with the \"*\" value, or no groups are present at all, no rules apply."
+      },
+      "reason": "No group names ExampleBot and there is no * group, so no rules apply.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "spaces-and-tabs-around-the-key",
+      "robots_txt": "\tuser-agent : *\n  disallow\t: /tmp\n",
+      "user_agent": "ExampleBot",
+      "path": "/tmp/x",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "disallow\t: /tmp"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2",
+        "level": null,
+        "quote": "rule = *WS (\"allow\" / \"disallow\") *WS \":\""
+      },
+      "reason": "Spaces and tabs may come before the key and before the colon.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2, the ABNF"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "merge-figure-2",
+      "robots_txt": "user-agent: ExampleBot\ndisallow: /foo\ndisallow: /bar\n\nuser-agent: ExampleBot\ndisallow: /baz\n",
+      "user_agent": "ExampleBot",
+      "path": "/baz",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 6,
+        "rule": "disallow: /baz"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.1",
+        "level": "MUST",
+        "quote": "If there is more than one group matching the user-agent, the matching groups' rules MUST be combined into one group and parsed according to Section 2.2.2."
+      },
+      "reason": "The two groups of Figure 2 merge, so the merged group has disallow: /baz.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.1, Figure 2"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "star-figure-3-rule",
+      "robots_txt": "user-agent: *\ndisallow: /foo\ndisallow: /bar\n\nuser-agent: BazBot\ndisallow: /baz\n",
+      "user_agent": "ExampleBot",
+      "path": "/foo",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "disallow: /foo"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.1",
+        "level": "MUST",
+        "quote": "If no matching group exists, crawlers MUST obey the group with a user-agent line with the \"*\" value, if present."
+      },
+      "reason": "Figure 3: no group names ExampleBot, so it obeys the * group and its disallow: /foo.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.1, Figure 3"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "star-figure-3-other-group",
+      "robots_txt": "user-agent: *\ndisallow: /foo\ndisallow: /bar\n\nuser-agent: BazBot\ndisallow: /baz\n",
+      "user_agent": "ExampleBot",
+      "path": "/baz",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "*",
+      "rfc": {
+        "section": "2.2.1",
+        "level": "MUST",
+        "quote": "If no matching group exists, crawlers MUST obey the group with a user-agent line with the \"*\" value, if present."
+      },
+      "reason": "Figure 3: disallow: /baz is in the BazBot group, which ExampleBot does not obey.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.1, Figure 3"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "encoded-utf8-figure-4",
+      "robots_txt": "User-agent: *\nDisallow: /foo/bar/%E3%83%84\n",
+      "user_agent": "ExampleBot",
+      "path": "/foo/bar/ツ",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /foo/bar/%E3%83%84"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "MUST",
+        "quote": "Octets in the URI and robots.txt paths outside the range of the ASCII coded character set, and those in the reserved range defined by [RFC3986], MUST be percent-encoded as defined by [RFC3986] prior to comparison."
+      },
+      "reason": "Figure 4: the ツ of the path is encoded as %E3%83%84 before the comparison, which matches the rule.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.2, Figure 4"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "dollar-figure-5-exact",
+      "robots_txt": "User-agent: *\nDisallow: /\nAllow: /this/path/exactly$\n",
+      "user_agent": "ExampleBot",
+      "path": "/this/path/exactly",
+      "expected": "allowed",
+      "decided_by": {
+        "line": 3,
+        "rule": "Allow: /this/path/exactly$"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates the end of the match pattern."
+      },
+      "reason": "The example of Figure 5. The path ends where the $ says, and the allow rule is the longer match.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.3, Figure 5"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "dollar-figure-5-longer",
+      "robots_txt": "User-agent: *\nDisallow: /\nAllow: /this/path/exactly$\n",
+      "user_agent": "ExampleBot",
+      "path": "/this/path/exactly/more",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates the end of the match pattern."
+      },
+      "reason": "The path goes on past the $, so only Disallow: / matches.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.3, Figure 5"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "asterisk-figure-5",
+      "robots_txt": "User-agent: *\nDisallow: /\nAllow: /this/*/exactly\n",
+      "user_agent": "ExampleBot",
+      "path": "/this/is/exactly",
+      "expected": "allowed",
+      "decided_by": {
+        "line": 3,
+        "rule": "Allow: /this/*/exactly"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.3",
+        "level": null,
+        "quote": "Designates 0 or more instances of any character."
+      },
+      "reason": "The example of Figure 5. The * covers is, and the allow rule is the longer match.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.3, Figure 5"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-star-gif",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "ExampleBot",
+      "path": "/images/logo.gif",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: *.gif$"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "It allows access to the URLs with the /publications/ path prefix, and it restricts access to the URLs with the /example/ path prefix and to all URLs with a .gif suffix."
+      },
+      "reason": "ExampleBot has no group in the example and obeys the * group. The path ends in .gif.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-star-example",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "ExampleBot",
+      "path": "/example/x.html",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 3,
+        "rule": "Disallow: /example/"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "It allows access to the URLs with the /publications/ path prefix, and it restricts access to the URLs with the /example/ path prefix and to all URLs with a .gif suffix."
+      },
+      "reason": "The * group restricts the /example/ prefix.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-star-publications",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "ExampleBot",
+      "path": "/publications/report.html",
+      "expected": "allowed",
+      "decided_by": {
+        "line": 4,
+        "rule": "Allow: /publications/"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "It allows access to the URLs with the /publications/ path prefix, and it restricts access to the URLs with the /example/ path prefix and to all URLs with a .gif suffix."
+      },
+      "reason": "The * group allows the /publications/ prefix.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-foobot-page",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "foobot",
+      "path": "/example/page.html",
+      "expected": "allowed",
+      "decided_by": {
+        "line": 8,
+        "rule": "Allow:/example/page.html"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "The crawler only has access to two URL path prefixes on the site -- /example/page.html and /example/allowed.gif."
+      },
+      "reason": "Allow:/example/page.html is longer than Disallow:/. The rules have no space after the colon.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-foobot-gif",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "foobot",
+      "path": "/example/allowed.gif",
+      "expected": "allowed",
+      "decided_by": {
+        "line": 9,
+        "rule": "Allow:/example/allowed.gif"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "The crawler only has access to two URL path prefixes on the site -- /example/page.html and /example/allowed.gif."
+      },
+      "reason": "foobot has its own group, so the *.gif$ rule of the * group does not reach it.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-foobot-other",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "foobot",
+      "path": "/index.html",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 7,
+        "rule": "Disallow:/"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "The crawler only has access to two URL path prefixes on the site -- /example/page.html and /example/allowed.gif."
+      },
+      "reason": "Any other path matches only Disallow:/.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-barbot-page",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "barbot",
+      "path": "/example/page.html",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 13,
+        "rule": "Disallow: /example/page.html"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "The crawlers are not allowed to access the URLs with the /example/page.html path prefix but otherwise have unrestricted access to the rest of the URLs on the site."
+      },
+      "reason": "barbot and bazbot share one group with Disallow: /example/page.html.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-bazbot-page",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "bazbot",
+      "path": "/example/page.html",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 13,
+        "rule": "Disallow: /example/page.html"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "The crawlers are not allowed to access the URLs with the /example/page.html path prefix but otherwise have unrestricted access to the rest of the URLs on the site."
+      },
+      "reason": "The second name of the shared group gets the same rule.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-barbot-other",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "barbot",
+      "path": "/example/other.html",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "own",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "The crawlers are not allowed to access the URLs with the /example/page.html path prefix but otherwise have unrestricted access to the rest of the URLs on the site."
+      },
+      "reason": "No rule of the shared group matches this path.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-1-quxbot",
+      "robots_txt": "User-Agent: *\nDisallow: *.gif$\nDisallow: /example/\nAllow: /publications/\n\nUser-Agent: foobot\nDisallow:/\nAllow:/example/page.html\nAllow:/example/allowed.gif\n\nUser-Agent: barbot\nUser-Agent: bazbot\nDisallow: /example/page.html\n\nUser-Agent: quxbot\n",
+      "user_agent": "quxbot",
+      "path": "/example/page.html",
+      "expected": "allowed",
+      "decided_by": null,
+      "group": "own",
+      "rfc": {
+        "section": "5.1",
+        "level": null,
+        "quote": "An empty group at the end of the file. The crawler has unrestricted access to the URLs on the site."
+      },
+      "reason": "quxbot has an empty group at the end of the file.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.1"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "example-5-2-longest",
+      "robots_txt": "User-Agent: foobot\nAllow: /example/page/\nDisallow: /example/page/disallowed.gif\n",
+      "user_agent": "foobot",
+      "path": "/example/page/disallowed.gif",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 3,
+        "rule": "Disallow: /example/page/disallowed.gif"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "5.2",
+        "level": null,
+        "quote": "The following example shows that in the case of two rules, the longest one is used for matching."
+      },
+      "reason": "Both rules match, and the disallow rule is the longer one. The RFC's prose names the URI disallow.gif. The vector uses the path of the rule.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 5.2"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "other-record-keeps-names-in-one-group-second",
+      "robots_txt": "User-agent: ExampleBot\nCrawl-delay: 10\nUser-agent: OtherBot\nDisallow: /\n",
+      "user_agent": "OtherBot",
+      "path": "/x",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 4,
+        "rule": "Disallow: /"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.4",
+        "level": "MUST NOT",
+        "quote": "Parsing of other records MUST NOT interfere with the parsing of explicitly defined records in Section 2. For example, a \"Sitemaps\" record MUST NOT terminate a group."
+      },
+      "reason": "OtherBot is named right above the rule, so the rule applies to it.",
+      "from": {
+        "kind": "sandbox",
+        "where": "Where it differs from the standard, /tools/robots-sandbox/"
+      },
+      "matcher_differs": false
+    },
+    {
+      "id": "other-record-keeps-names-in-one-group-first",
+      "robots_txt": "User-agent: ExampleBot\nCrawl-delay: 10\nUser-agent: OtherBot\nDisallow: /\n",
+      "user_agent": "ExampleBot",
+      "path": "/x",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 4,
+        "rule": "Disallow: /"
+      },
+      "group": "own",
+      "rfc": {
+        "section": "2.2.4",
+        "level": "MUST NOT",
+        "quote": "Parsing of other records MUST NOT interfere with the parsing of explicitly defined records in Section 2. For example, a \"Sitemaps\" record MUST NOT terminate a group."
+      },
+      "reason": "Crawl-delay is not a record of the protocol, so it must not end the run of user-agent lines. ExampleBot and OtherBot share the group.",
+      "from": {
+        "kind": "sandbox",
+        "where": "Where it differs from the standard, /tools/robots-sandbox/"
+      },
+      "matcher_differs": true,
+      "difference": "other-record-ends-group"
+    },
+    {
+      "id": "unreserved-escape-in-the-path",
+      "robots_txt": "User-agent: *\nDisallow: /private\n",
+      "user_agent": "ExampleBot",
+      "path": "/%70rivate",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /private"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "MUST",
+        "quote": "If a percent-encoded ASCII octet is encountered in the URI, it MUST be unencoded prior to comparison, unless it is a reserved character in the URI as defined by [RFC3986] or the character is outside the unreserved character range."
+      },
+      "reason": "%70 is the letter p, an unreserved character, so the path is compared as /private.",
+      "from": {
+        "kind": "sandbox",
+        "where": "Where it differs from the standard, /tools/robots-sandbox/"
+      },
+      "matcher_differs": true,
+      "difference": "unreserved-escape"
+    },
+    {
+      "id": "unreserved-escape-figure-4",
+      "robots_txt": "User-agent: *\nDisallow: /foo/bar/baz\n",
+      "user_agent": "ExampleBot",
+      "path": "/foo/bar/%62%61%7A",
+      "expected": "disallowed",
+      "decided_by": {
+        "line": 2,
+        "rule": "Disallow: /foo/bar/baz"
+      },
+      "group": "*",
+      "rfc": {
+        "section": "2.2.2",
+        "level": "MUST",
+        "quote": "If a percent-encoded ASCII octet is encountered in the URI, it MUST be unencoded prior to comparison, unless it is a reserved character in the URI as defined by [RFC3986] or the character is outside the unreserved character range."
+      },
+      "reason": "Figure 4: %62%61%7A is baz, so the path to match is /foo/bar/baz.",
+      "from": {
+        "kind": "rfc",
+        "where": "Section 2.2.2, Figure 4"
+      },
+      "matcher_differs": true,
+      "difference": "unreserved-escape"
+    }
+  ]
+}

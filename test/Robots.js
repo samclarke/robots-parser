@@ -1,5 +1,7 @@
 var robotsParser = require('../index');
 var expect = require('chai').expect;
+const fs = require('fs');
+const path = require('path')
 
 
 function testRobots(url, contents, allowed, disallowed) {
@@ -385,6 +387,19 @@ describe('Robots', function () {
 		expect(robots.isAllowed("http://www.example.com/fish", "agenta")).to.equal(false);
 	});
 
+	it('should not fallback to * when specified but empty', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /fish',
+			'User-agent: agent',
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+
+		expect(robots.isAllowed("http://www.example.com/fish", "agent-other")).to.equal(false);
+		expect(robots.isAllowed("http://www.example.com/fish", "agent")).to.equal(true);
+	});
+	
 	it('should return undefined for invalid urls', function () {
 		var contents = [
 			'User-agent: *',
@@ -442,7 +457,9 @@ describe('Robots', function () {
 			'Disallow: /✼*t$',
 			'Disallow: /%E2%9C%A4*t$',
 			'Disallow: /✿%a',
-			'Disallow: /http%3A%2F%2Fexample.org'
+			'Disallow: /http%3A%2F%2Fexample.org',
+			'Disallow: /%E0',
+			'Disallow: /%00test'
 		].join('\n');
 
 		var allowed = [
@@ -450,8 +467,7 @@ describe('Robots', function () {
 			'http://www.example.com/%E2%9C%BCtesting',
 			'http://www.example.com/✤testing',
 			'http://www.example.com/%E2%9C%A4testing',
-			'http://www.example.com/http://example.org',
-			'http://www.example.com/http:%2F%2Fexample.org'
+			'http://www.example.com/%00allow',
 		];
 
 		var disallowed = [
@@ -475,9 +491,48 @@ describe('Robots', function () {
 			'http://www.example.com/%E2%9C%A4testt',
 			'http://www.example.com/✿%a',
 			'http://www.example.com/%E2%9C%BF%atest',
-			'http://www.example.com/http%3A%2F%2Fexample.org'
+			'http://www.example.com/http%3A%2F%2Fexample.org',
+			'http://www.example.com/%E0test',
+			'http://www.example.com/%00test'
 		];
 
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should handle urlencoded path segments', function () {
+		var contents = [
+			'User-agent: *',
+			'Allow: /test%2Ftest',
+			'Disallow: /test/test'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/test%2Ftest',
+		];
+
+		var disallowed = [
+			'http://www.example.com/test/test'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should handle encoded / in paths an URLs', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /a/b',
+			'Allow: /a%2Fb'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/a%2Fb'
+		];
+		
+		var disallowed = [
+			'http://www.example.com/a/b/c',
+			'http://www.example.com/a/b'
+		];
+		
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
 	});
 
@@ -748,6 +803,27 @@ describe('Robots', function () {
 	});
 
 	it('should fallback to * when a UA has no rules of its own', function () {
+        var contents = [
+			'User-agent: *',
+			'Disallow: /a',
+
+			'user-agent: b',
+			'Disallow: /b',
+
+			'user-agent: c',
+			'user-agent: d',
+			'Disallow: /c',
+        ].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+
+		expect(robots.isAllowed('http://www.example.com/a', 'should-fall-back')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/a', 'd')).to.equal(true);
+		expect(robots.isAllowed('http://www.example.com/c', 'should-fall-back')).to.equal(true);
+		expect(robots.isAllowed('http://www.example.com/c', 'd')).to.equal(false);
+	});
+
+	it('should have crawl-delay fallback to * when a UA has no rules of its own', function () {
 		var contents = [
 			'user-agent: *',
 			'crawl-delay: 1',
@@ -811,6 +887,33 @@ describe('Robots', function () {
 		expect(robots.getCrawlDelay('d/12')).to.equal(10);
 		expect(robots.getCrawlDelay('dd / 0-32-3')).to.equal(1);
 		expect(robots.getCrawlDelay('b / 1.0')).to.equal(12);
+	});
+
+	it('should ignore spaces UA string', function () {
+		var contents = [
+			'user-agent: *',
+			'disallow:',
+
+			'user-agent: b foo',
+			'disallow: /b',
+
+			'user-agent: c',
+			'disallow: /c'
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+		
+		expect(robots.isAllowed('http://www.example.com/b', 'b')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/b', 'b foo')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/b', 'b anything')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/b', 'bC')).to.equal(true);
+		expect(robots.isAllowed('http://www.example.com/b', 'b-c')).to.equal(true);
+
+		expect(robots.isAllowed('http://www.example.com/c', 'c')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/c', 'c foo')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/c', 'c anything')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/c', 'cC')).to.equal(true);
+		expect(robots.isAllowed('http://www.example.com/c', 'c-c')).to.equal(true);
 	});
 
 
@@ -1131,5 +1234,39 @@ describe('Robots', function () {
 		];
 
         testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should implicitly allow robots.txt URLs', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /robots.txt',
+		].join('\n');
+
+		var allowed = [
+			'https://www.example.com/robots.txt',
+		];
+		
+		// The spec says /robots.txt URI is implicitly allowed so assuming that
+		// is strict and doesn't include query strings
+		var disallowed = [
+			'https://www.example.com/robots.txt?testing=123',
+			'https://www.example.com/robots.txt/something',
+			'https://www.example.com/robots.txts'
+		];
+
+		testRobots('https://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
+	it('should pass rfc9309-test-vectors.json tests', function () {
+		const file = path.resolve(__dirname,'./rfc9309-test-vectors.json')
+		const testVectors = JSON.parse(fs.readFileSync(file, 'utf8'));
+
+		testVectors.vectors.forEach(vector => {
+			const robots = robotsParser('http://www.example.com/robots.txt', vector.robots_txt);
+			const result = robots.isAllowed('http://www.example.com' + vector.path, vector.user_agent);
+			const expected = vector.expected === "allowed";
+
+			expect(result, `should pass test id "${vector.id}"`).to.equal(expected);
+		});
 	});
 });

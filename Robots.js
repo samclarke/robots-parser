@@ -63,14 +63,15 @@ function splitLine(line) {
  */
 function formatUserAgent(userAgent) {
 	var formattedUserAgent = userAgent.toLowerCase();
-
-	// Strip the version number from robot/1.0 user agents
-	var idx = formattedUserAgent.indexOf('/');
-	if (idx > -1) {
-		formattedUserAgent = formattedUserAgent.substr(0, idx);
+	if (formattedUserAgent[0] === '*') {
+		return '*';
 	}
 
-	return formattedUserAgent.trim();
+	// 2.2.1. The User-Agent Line
+	// The product token MUST contain only uppercase and lowercase letters
+	// ("a-z" and "A-Z"), underscores ("_"), and hyphens ("-"). The
+	var match = formattedUserAgent.match(/^[a-zA-Z_-]+/);
+	return match && match[0] ? match[0] : '';
 }
 
 /**
@@ -83,24 +84,33 @@ function formatUserAgent(userAgent) {
  */
 function normaliseEncoding(path) {
 	try {
-		return urlEncodeToUpper(encodeURI(path).replace(/%25/g, '%'));
+		// Encode any non-ASCII chars
+		return safeDecodeURI(path).replace(/[^\x00-\x7F]/gu, (char) => {
+			return encodeURIComponent(char).toUpperCase();
+		});
 	} catch (e) {
 		return path;
 	}
 }
 
 /**
- * Convert URL encodings to support case.
- *
- * e.g.: %2a%ef becomes %2A%EF
- *
+ * Only decodes alpha numeric and - . _ ~ characters and converts all others to
+ * uppercase.
  * @param {string} path
- * @return {string}
- * @private
  */
-function urlEncodeToUpper(path) {
-	return path.replace(/%[0-9a-fA-F]{2}/g, function (match) {
-		return match.toUpperCase();
+function safeDecodeURI(path) {
+	return path.replace(/%[0-9a-f]{2}/gi, (match) => {
+		const code = parseInt(match.slice(1), 16);
+		const isUnreserved =
+			(code >= 0x41 && code <= 0x5a) || // A-Z
+			(code >= 0x61 && code <= 0x7a) || // a-z
+			(code >= 0x30 && code <= 0x39) || // 0-9
+			code === 0x2d || // -
+			code === 0x2e || // .
+			code === 0x5f || // _
+			code === 0x7e; // ~
+
+		return isUnreserved ? String.fromCharCode(code) : match.toUpperCase();
 	});
 }
 
@@ -338,7 +348,13 @@ function parseRobots(contents, robots) {
 		.map(trimLine);
 
 	var currentUserAgents = [];
-	var isNoneUserAgentState = true;
+	/**
+	 * Used to allow crawl-delay and any other non-standard directives to have
+	 * their own grouping without affecting the RFC standard groupings.
+	 */
+	var currentNoneStandardUserAgents = [];
+	var isGroupTermination = true;
+	var isNoneStandardGroupTermination = true;
 	for (var i = 0; i < lines.length; i++) {
 		var line = lines[i];
 
@@ -346,14 +362,23 @@ function parseRobots(contents, robots) {
 			continue;
 		}
 
-		switch (line[0].toLowerCase()) {
+		const rule = line[0].toLowerCase();
+		switch (rule) {
 			case 'user-agent':
-				if (isNoneUserAgentState) {
+				if (isGroupTermination) {
 					currentUserAgents.length = 0;
 				}
 
+				if (isNoneStandardGroupTermination) {
+					currentNoneStandardUserAgents.length = 0;
+				}
+
 				if (line[1]) {
-					currentUserAgents.push(formatUserAgent(line[1]));
+					const userAgent = formatUserAgent(line[1]);
+					currentUserAgents.push(userAgent);
+					currentNoneStandardUserAgents.push(userAgent);
+
+					robots._rules[userAgent] = robots._rules[userAgent] || [];
 				}
 				break;
 			case 'disallow':
@@ -363,7 +388,7 @@ function parseRobots(contents, robots) {
 				robots.addRule(currentUserAgents, line[1], true, i + 1);
 				break;
 			case 'crawl-delay':
-				robots.setCrawlDelay(currentUserAgents, line[1]);
+				robots.setCrawlDelay(currentNoneStandardUserAgents, line[1]);
 				break;
 			case 'sitemap':
 				if (line[1]) {
@@ -377,7 +402,8 @@ function parseRobots(contents, robots) {
 				break;
 		}
 
-		isNoneUserAgentState = line[0].toLowerCase() !== 'user-agent';
+		isGroupTermination = rule === 'allow' || rule === 'disallow';
+		isNoneStandardGroupTermination = rule !== 'user-agent';
 	}
 }
 
@@ -468,8 +494,6 @@ Robots.prototype.addRule = function (userAgents, pattern, allow, lineNumber) {
 	var rules = this._rules;
 
 	userAgents.forEach(function (userAgent) {
-		rules[userAgent] = rules[userAgent] || [];
-
 		if (!pattern) {
 			return;
 		}
@@ -493,8 +517,6 @@ Robots.prototype.setCrawlDelay = function (userAgents, delayStr) {
 	var delay = Number(delayStr);
 
 	userAgents.forEach(function (userAgent) {
-		rules[userAgent] = rules[userAgent] || [];
-
 		if (isNaN(delay)) {
 			return;
 		}
@@ -540,7 +562,12 @@ Robots.prototype._getRule = function (url, ua, explicit) {
 	}
 	rules = rules || [];
 
-	var path = urlEncodeToUpper(parsedUrl.pathname + parsedUrl.search);
+	var path = normaliseEncoding(parsedUrl.pathname + parsedUrl.search);
+	// The /robots.txt URI is implicitly allowed
+	if (path === '/robots.txt') {
+		return null;
+	}
+
 	return findRule(path, rules);
 };
 
