@@ -517,6 +517,25 @@ describe('Robots', function () {
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
 	});
 
+	it('should handle encoded / in paths an URLs', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /a/b',
+			'Allow: /a%2Fb'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/a%2Fb'
+		];
+		
+		var disallowed = [
+			'http://www.example.com/a/b/c',
+			'http://www.example.com/a/b'
+		];
+		
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
 	it('should handle lone high / low surrogates', function () {
 		var contents = [
 			'User-agent: *',
@@ -1222,11 +1241,11 @@ describe('Robots', function () {
 			'User-agent: *',
 			'Disallow: /robots.txt',
 		].join('\n');
-		
+
 		var allowed = [
 			'https://www.example.com/robots.txt',
 		];
-
+		
 		// The spec says /robots.txt URI is implicitly allowed so assuming that
 		// is strict and doesn't include query strings
 		var disallowed = [
