@@ -1217,6 +1217,27 @@ describe('Robots', function () {
         testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
 	});
 
+	it('should implicitly allow robots.txt URLs', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /robots.txt',
+		].join('\n');
+		
+		var allowed = [
+			'https://www.example.com/robots.txt',
+		];
+
+		// The spec says /robots.txt URI is implicitly allowed so assuming that
+		// is strict and doesn't include query strings
+		var disallowed = [
+			'https://www.example.com/robots.txt?testing=123',
+			'https://www.example.com/robots.txt/something',
+			'https://www.example.com/robots.txts'
+		];
+
+		testRobots('https://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
 	it('should pass rfc9309-test-vectors.json tests', function () {
 		const file = path.resolve(__dirname,'./rfc9309-test-vectors.json')
 		const testVectors = JSON.parse(fs.readFileSync(file, 'utf8'));
