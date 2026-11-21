@@ -4,6 +4,8 @@
 
 -   Updated README to point to RFC 9309 instead of the draft specification.
     &ndash; Thanks to @joepie91 for reporting.
+-   Fixed CommonJS export type in typescript definitions.
+    &ndash; Thanks to @markedwards for fixing.
 -   Added `isExplicitlyDisallowed()` method.
     &ndash; Thanks to @AuDigent for implementing.
 -   Fixed grouping to match RFC 9309 by not treating non-standard directives like crawl-delay as terminating a group.
