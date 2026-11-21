@@ -112,6 +112,11 @@ Returns the preferred host name specified by the `host:` directive or null if th
 
 # Changes
 
+## Version 3.1.1
+
+-   Fixed bug from 3.1.0 with sitemap, crawl-delay, host and unknown directives not terminating groups.
+    &ndash; Thanks to @bardrop for reporting and fixing.
+
 ## Version 3.1.0
 
 -   Updated README to point to RFC 9309 instead of the draft specification.
