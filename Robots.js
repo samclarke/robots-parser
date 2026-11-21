@@ -402,7 +402,13 @@ function parseRobots(contents, robots) {
 				break;
 		}
 
-		isGroupTermination = rule === 'allow' || rule === 'disallow';
+		// Other records (sitemap, crawl-delay, host, unknown) must not change
+		// the grouping: only a rule ends the user-agent lines of a group
+		if (rule === 'user-agent') {
+			isGroupTermination = false;
+		} else if (rule === 'allow' || rule === 'disallow') {
+			isGroupTermination = true;
+		}
 		isNoneStandardGroupTermination = rule !== 'user-agent';
 	}
 }
