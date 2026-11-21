@@ -1257,6 +1257,37 @@ describe('Robots', function () {
 		testRobots('https://www.example.com/robots.txt', contents, allowed, disallowed);
 	});
 
+	it('should start a new group after rules even if other records follow them', function () {
+		['Sitemap: http://www.example.com/sitemap.xml', 'Crawl-delay: 1', 'Host: www.example.com', 'Foo: bar'].forEach(function (record) {
+			var contents = [
+				'User-agent: a',
+				'Allow: /fish',
+				record,
+				'User-agent: b',
+				'Disallow: /'
+			].join('\n');
+
+			var robots = robotsParser('http://www.example.com/robots.txt', contents);
+
+			expect(robots.isAllowed('http://www.example.com/test.html', 'a'), record).to.equal(true);
+			expect(robots.isAllowed('http://www.example.com/test.html', 'b'), record).to.equal(false);
+		});
+	});
+
+	it('should not end a group of user-agent lines on other records', function () {
+		var contents = [
+			'User-agent: a',
+			'Sitemap: http://www.example.com/sitemap.xml',
+			'User-agent: b',
+			'Disallow: /'
+		].join('\n');
+
+		var robots = robotsParser('http://www.example.com/robots.txt', contents);
+
+		expect(robots.isAllowed('http://www.example.com/test.html', 'a')).to.equal(false);
+		expect(robots.isAllowed('http://www.example.com/test.html', 'b')).to.equal(false);
+	});
+
 	it('should pass rfc9309-test-vectors.json tests', function () {
 		const file = path.resolve(__dirname,'./rfc9309-test-vectors.json')
 		const testVectors = JSON.parse(fs.readFileSync(file, 'utf8'));
