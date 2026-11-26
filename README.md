@@ -112,6 +112,11 @@ Returns the preferred host name specified by the `host:` directive or null if th
 
 # Changes
 
+## Version 3.1.2
+
+-   Fixed bug with non-encoded special characters in `allow` and `disallow` paths, and now handles non-encoded spaces inside paths.
+    &ndash; Thanks to @bardrop for reporting and fixing.
+
 ## Version 3.1.1
 
 -   Fixed bug from 3.1.0 with sitemap, crawl-delay, host and unknown directives not terminating groups.

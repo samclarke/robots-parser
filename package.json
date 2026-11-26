@@ -1,6 +1,6 @@
 {
 	"name": "robots-parser",
-	"version": "3.1.1",
+	"version": "3.1.2",
 	"description": "A specification compliant robots.txt parser with wildcard (*) matching support.",
 	"keywords": [
 		"robots.txt",
