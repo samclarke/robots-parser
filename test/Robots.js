@@ -536,6 +536,36 @@ describe('Robots', function () {
 		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
 	});
 
+	it('should match characters the URL parser percent-encodes', function () {
+		var contents = [
+			'User-agent: *',
+			'Disallow: /a b',
+			'Disallow: /*"',
+			'Disallow: /*{',
+			'Disallow: /*^',
+			'Disallow: /c|d',
+			'Disallow: /e%7Cf'
+		].join('\n');
+
+		var allowed = [
+			'http://www.example.com/ab',
+			'http://www.example.com/c'
+		];
+
+		var disallowed = [
+			'http://www.example.com/a b',
+			'http://www.example.com/a%20b',
+			'http://www.example.com/x"',
+			'http://www.example.com/x{y}',
+			'http://www.example.com/x^y',
+			'http://www.example.com/c|d',
+			'http://www.example.com/c%7Cd',
+			'http://www.example.com/e|f'
+		];
+
+		testRobots('http://www.example.com/robots.txt', contents, allowed, disallowed);
+	});
+
 	it('should handle lone high / low surrogates', function () {
 		var contents = [
 			'User-agent: *',

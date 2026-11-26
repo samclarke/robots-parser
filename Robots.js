@@ -76,7 +76,8 @@ function formatUserAgent(userAgent) {
 
 /**
  * Normalises the URL encoding of a path by encoding
- * unicode characters.
+ * unicode characters and ASCII characters that are not
+ * allowed in a URL.
  *
  * @param {string} path
  * @return {string}
@@ -84,8 +85,10 @@ function formatUserAgent(userAgent) {
  */
 function normaliseEncoding(path) {
 	try {
-		// Encode any non-ASCII chars
-		return safeDecodeURI(path).replace(/[^\x00-\x7F]/gu, (char) => {
+		// Encode any non-ASCII chars and the ASCII chars that are not allowed
+		// in a URL (the URL parser encodes most of these in paths, so the
+		// patterns must be encoded the same way to match)
+		return safeDecodeURI(path).replace(/[^\x00-\x7F]|[\x00-\x20"<>\\^`{|}\x7F]/gu, (char) => {
 			return encodeURIComponent(char).toUpperCase();
 		});
 	} catch (e) {
